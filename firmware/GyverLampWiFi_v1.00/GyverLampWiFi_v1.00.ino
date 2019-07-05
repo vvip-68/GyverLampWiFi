@@ -283,6 +283,9 @@ void setup() {
   // UDP-клиент на указанном порту
   udp.begin(localPort);
 
+  // IP адрес сервера времени
+  WiFi.hostByName(ntpServerName, timeServerIP);
+
   butt.setStepTimeout(100);
   butt.setClickTimeout(500);
 

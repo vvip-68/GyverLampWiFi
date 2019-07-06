@@ -87,7 +87,7 @@
 
 <a id="chapter-2"></a>
 ## Схема
-![SCHEME](https://github.com/vvip-68/GyverMatrixWiFi/blob/master/schemes/scheme.jpg)
+![SCHEME](https://github.com/vvip-68/GyverLampWiFi/blob/master/schemes/scheme.jpg)
 
 <a id="chapter-3"></a>
 ## Материалы и компоненты

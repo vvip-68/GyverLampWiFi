@@ -321,10 +321,12 @@ void loop() {
   process();
   ESP.wdtFeed();
 
+  /*
   if (millis() - t > 5000) {
     t = millis();
     Serial.println(String(F("Free memory:")) + String(ESP.getFreeHeap()));
   }
+  */
 }
 
 // -----------------------------------------

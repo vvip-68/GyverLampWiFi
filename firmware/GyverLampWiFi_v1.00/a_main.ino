@@ -31,7 +31,7 @@ void process() {
   // на время принятия данных матрицу не обновляем!
   if (!parseStarted) {                          
     if (wifi_connected && useNtp) {
-      if (ntp_t > 0 && millis() - ntp_t > 3000) {
+      if (ntp_t > 0 && millis() - ntp_t > 10000) {
         Serial.println(F("Таймаут NTP запроса!"));
         ntp_t = 0;
         ntp_cnt++;
@@ -184,6 +184,7 @@ void process() {
         specialBrightness = 255;
         globalBrightness = 255;
         globalColor = 0xFFFFFF;
+        isButtonHold = false;
         setSpecialMode(1);
         FastLED.setBrightness(globalBrightness);
     }

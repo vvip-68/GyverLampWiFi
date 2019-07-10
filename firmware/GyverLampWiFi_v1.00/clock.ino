@@ -44,12 +44,12 @@ void getNTP() {
   if (!wifi_connected) return;
   sendNTPpacket(timeServerIP); // send an NTP packet to a time server
   // wait to see if a reply is available
-  ntp_t = millis();
+  ntp_t = millis();  
 }
 
 void clockTicker() {  
 
-  if (isTurnedOff && needTurnOffClock) {
+  if (isTurnedOff && needTurnOffClock && init_time) {
     disp.displayByte(_empty, _empty, _empty, _empty);
     disp.point(false);
     return;
@@ -105,7 +105,10 @@ void clockTicker() {
       }
     } else {
       // Время получено - отображать часы:минуты
-      if (halfSec) disp.displayClock(hour(),minute());
+      if (halfSec) {
+        disp.displayClock(hour(),minute());
+        disp.brightness(isTurnedOff ? 1 : 7);
+      }
     }
   }
 }
@@ -403,7 +406,7 @@ void SetAutoMode(byte amode) {
   int8_t ef = (amode == 1 ? AM1_effect_id : AM2_effect_id);
 
   //ef: -2 - нет действия; 
-  //    -1 - выключить матрицу (черный экран); 
+  //    -1 - выключить лампы (черный экран); 
   //     0 - случайный,
   //     1 и далее - эффект из EFFECT_LIST по списку
 
@@ -411,7 +414,7 @@ void SetAutoMode(byte amode) {
   if (ef == -1) {
 
     // Выключить матрицу (черный экран)
-    Serial.print(F("выключение матрицы"));
+    Serial.print(F("выключение лампы"));
     setSpecialMode(0);
     
   } else {

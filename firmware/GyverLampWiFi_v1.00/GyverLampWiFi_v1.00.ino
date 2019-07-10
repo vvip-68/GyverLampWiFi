@@ -315,18 +315,9 @@ void setup() {
   isTurnedOff = true; 
 }
 
-unsigned long t = millis();
-
 void loop() {  
   process();
-  ESP.wdtFeed();
-
-  /*
-  if (millis() - t > 5000) {
-    t = millis();
-    Serial.println(String(F("Free memory:")) + String(ESP.getFreeHeap()));
-  }
-  */
+  ESP.wdtFeed();  
 }
 
 // -----------------------------------------
@@ -359,6 +350,7 @@ void startWiFi() {
         Serial.println(WiFi.localIP());
         break;
       }
+      ESP.wdtFeed();
       delay(1000);
       Serial.print(".");
     }
@@ -397,6 +389,7 @@ void startSoftAP() {
     
     WiFi.enableAP(false);
     WiFi.softAPdisconnect(true);
+    ESP.wdtFeed();
     delay(1000);
     
     Serial.print(".");

@@ -30,7 +30,6 @@ void process() {
 
   // на время принятия данных матрицу не обновляем!
   if (!parseStarted) {                          
-
     if (wifi_connected && useNtp) {
       if (ntp_t > 0 && millis() - ntp_t > 3000) {
         Serial.println(F("Таймаут NTP запроса!"));
@@ -48,7 +47,7 @@ void process() {
         if (ntp_cnt >= 10) udp.flush();
       }
     }
-      
+
     // Сформировать и вывести на матрицу текущий демо-режим
     customRoutine(thisMode);
     
@@ -77,6 +76,18 @@ void process() {
       // Состояние - кнопку отпустили
       isButtonHold = false;
     }
+    
+    if (butt.isHolded()) {
+      isButtonHold = true;
+      if (!isTurnedOff && thisMode != MC_DAWN_ALARM) {
+        if (globalBrightness == 255)
+          brightDirection = false;
+        else if (globalBrightness == 0)  
+          brightDirection = true;
+        else  
+          brightDirection = !brightDirection;
+      }
+    }
 
     // Любое нажатие кнопки останавливает будильник
     if ((isAlarming || isPlayAlarmSound) && (isButtonHold || clicks > 0)) {
@@ -103,7 +114,7 @@ void process() {
         setSpecialMode(0);
       }
     }
-
+    
     // Прочие клики работают только если не выключено
     if (!isTurnedOff) {
 
@@ -132,37 +143,33 @@ void process() {
         setRandomMode();
       }
             
-      // Четверное нажатие - показать текущий IP WiFi-соединения
-      else if (clicks == 4) {
+      // Пятикратное нажатие - показать текущий IP WiFi-соединения
+      else if (clicks == 5) {
         wifi_print_ip = true;
         wifi_print_idx = 0; 
       }      
+      
       // ... и т.д.
       
       // Обработка нажатой и удерживаемой кнопки
       else {
       
-        if (butt.isHolded() && thisMode != MC_DAWN_ALARM) {
-          isButtonHold = true;
-          brightDirection = !brightDirection;
-        }
-        
         if (butt.isStep() && thisMode != MC_DAWN_ALARM) {
           if (brightDirection) {
             if (globalBrightness < 10) globalBrightness += 1;
-            else if (globalBrightness < 250)globalBrightness += 5;
+            else if (globalBrightness < 250) globalBrightness += 5;
             else {
               globalBrightness = 255;
-              // brightDirection = !brightDirection;
             }
           } else {
             if (globalBrightness > 15) globalBrightness -= 5;
             else if (globalBrightness > 1) globalBrightness -= 1;
             else {
               globalBrightness = 1;
-              // brightDirection = !brightDirection;
             }
           }
+
+          specialBrightness = globalBrightness;
         
           FastLED.setBrightness(globalBrightness);
           
@@ -171,9 +178,28 @@ void process() {
         }
       }            
     }
-    
+
+    else if (isButtonHold) {
+        // Включить лампу - белый цвет
+        specialBrightness = 255;
+        globalBrightness = 255;
+        globalColor = 0xFFFFFF;
+        setSpecialMode(1);
+        FastLED.setBrightness(globalBrightness);
+    }
+
+    // Четверное нажатие - включить белую лампу независимо от того была она выключена или включен любой другой режим
+    if (clicks == 4) {
+      // Включить лампу - белый цвет
+      specialBrightness = 255;
+      globalBrightness = 255;
+      globalColor = 0xFFFFFF;
+      setSpecialMode(1);
+      FastLED.setBrightness(globalBrightness);
+    }      
+
     // Есть ли изменение статуса MP3-плеера?
-    if (/*isDfPlayerOk && */dfPlayer.available()) {
+    if (dfPlayer.available()) {
 
       // Вывести детали об изменении статуса в лог
       byte msg_type = dfPlayer.readType();      
@@ -970,7 +996,7 @@ void sendPageParams(int page) {
     // Отправить клиенту запрошенные параметры страницы / режимов
     str.toCharArray(incomeBuffer, str.length()+1);    
     udp.beginPacket(udp.remoteIP(), udp.remotePort());
-    udp.write(incomeBuffer);
+    udp.write(incomeBuffer, str.length()+1);
     udp.endPacket();
     delay(0);
     Serial.println(String(F("Ответ на ")) + udp.remoteIP().toString() + ":" + String(udp.remotePort()) + " >> " + String(incomeBuffer));
@@ -986,9 +1012,9 @@ void sendAcknowledge() {
   if (cmd95.length() > 0) { reply += cmd95; cmd95 = ""; isCmd = true;}
   if (cmd96.length() > 0) { reply += cmd96; cmd96 = ""; isCmd = true; }
   reply += "ack" + String(ackCounter++) + ";";  
-  reply.toCharArray(replyBuffer, reply.length()+1);    
+  reply.toCharArray(replyBuffer, reply.length()+1);
   udp.beginPacket(udp.remoteIP(), udp.remotePort());
-  udp.write(replyBuffer);
+  udp.write(replyBuffer, reply.length()+1);
   udp.endPacket();
   delay(0);
   if (isCmd) {

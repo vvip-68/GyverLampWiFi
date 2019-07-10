@@ -32,8 +32,8 @@
 
 void customRoutine(byte aMode) {
 
-  if (effectTimer.isReady() || aMode > MAX_EFFECT) {  
-    switch (aMode) {    
+  if (effectTimer.isReady() || aMode > MAX_EFFECT) {
+    switch (aMode) {
       case MC_NOISE_MADNESS:       madnessNoise(); break;
       case MC_NOISE_CLOUD:         cloudNoise(); break;
       case MC_NOISE_LAVA:          lavaNoise(); break;
@@ -62,7 +62,7 @@ void customRoutine(byte aMode) {
       case MC_DAWN_ALARM_SPIRAL:   dawnLampSpiral(); break;
       case MC_DAWN_ALARM_SQUARE:   dawnLampSquare(); break;
     }
-    FastLED.show();  
+    FastLED.show();
   }
 }
 
@@ -103,7 +103,8 @@ void nextModeHandler() {
       thisMode = curMode++;
       if (thisMode >= MAX_EFFECT) thisMode = 0;
       break;
-    }    
+    }   
+    ESP.wdtFeed(); 
   }
   
   loadingFlag = true;
@@ -132,7 +133,8 @@ void prevModeHandler() {
       thisMode = curMode--;
       if (thisMode < 0) thisMode = MAX_EFFECT - 1;
       break;
-    }    
+    }   
+    ESP.wdtFeed(); 
   }
   
   loadingFlag = true;

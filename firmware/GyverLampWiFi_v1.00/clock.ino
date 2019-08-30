@@ -3,7 +3,9 @@ unsigned long sendNTPpacket(IPAddress& address) {
   Serial.print(F("Отправка NTP пакета на сервер "));
   Serial.println(ntpServerName);
   // set all bytes in the buffer to 0
-  memset(packetBuffer, 0, NTP_PACKET_SIZE);
+  // memset(packetBuffer, 0, NTP_PACKET_SIZE);
+  for (byte i=0; i<NTP_PACKET_SIZE; i++) packetBuffer[i] = 0;
+  
   // Initialize values needed to form NTP request
   // (see URL above for details on the packets)
   packetBuffer[0] = 0b11100011;   // LI, Version, Mode
@@ -42,6 +44,9 @@ void parseNTP() {
 
 void getNTP() {
   if (!wifi_connected) return;
+  WiFi.hostByName(ntpServerName, timeServerIP);
+  if (!timeServerIP.isSet()) timeServerIP.fromString(F("80.240.216.155"));  // Один из ru.pool.ntp.org // 195.3.254.2
+  printNtpServerName();
   sendNTPpacket(timeServerIP); // send an NTP packet to a time server
   // wait to see if a reply is available
   ntp_t = millis();  

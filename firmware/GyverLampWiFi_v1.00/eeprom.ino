@@ -222,6 +222,8 @@ void saveDefaults() {
 
 void saveSettings() {
 
+  saveSettingsTimer.reset();
+  
   if (!eepromModified) return;
   
   // Поставить отметку, что EEPROM инициализировано параметрами эффектов

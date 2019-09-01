@@ -315,7 +315,7 @@ void startWiFi() {
   
   WiFi.disconnect(true);
   wifi_connected = false;
-  WiFi.mode(WIFI_AP_STA);
+  WiFi.mode(WIFI_STA);
  
   // Пытаемся соединиться с роутером в сети
   if (strlen(ssid) > 0) {

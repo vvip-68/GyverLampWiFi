@@ -208,7 +208,7 @@ void process() {
     }      
 
     // Есть ли изменение статуса MP3-плеера?
-    if (dfPlayer.available()) {
+    if (USE_MP3 == 1 && dfPlayer.available()) {
 
       // Вывести детали об изменении статуса в лог
       byte msg_type = dfPlayer.readType();      
@@ -411,7 +411,9 @@ void parsing() {
               // MMx   - минуты дня недели x (1-пн..7-вс)
               //
               // Остановить будильнтк, если он сработал
-              dfPlayer.stop();
+              if (isDfPlayerOk) {
+                dfPlayer.stop();
+              }
               soundFolder = 0;
               soundFile = 0;
               isAlarming = false;
@@ -750,76 +752,75 @@ void parsing() {
   }
 
   // ****************** ПАРСИНГ *****************
-  haveIncomeData = false;
 
+  // Если предыдущий буфер еще не разобран - новых данных из сокета не читаем, продолжаем разбор уже считанного буфера
+  haveIncomeData = bufIdx > 0 && bufIdx < packetSize; 
   if (!haveIncomeData) {
+    packetSize = udp.parsePacket();      
+    haveIncomeData = packetSize > 0;      
+  
+    if (haveIncomeData) {                
+      // read the packet into packetBufffer
+      int len = udp.read(incomeBuffer, UDP_PACKET_MAX_SIZE);
+      if (len > 0) {          
+        incomeBuffer[len] = 0;
+      }
+      bufIdx = 0;
+      
+      delay(0);            // ESP8266 при вызове delay отпрабатывает стек IP протокола, дадим ему поработать        
 
-    // Если предыдущий буфер еще не разобран - новых данных из сокета не читаем, продолжаем разбор уже считанного буфера
-    haveIncomeData = bufIdx > 0 && bufIdx < packetSize; 
-    if (!haveIncomeData) {
-      packetSize = udp.parsePacket();      
-      haveIncomeData = packetSize > 0;      
-    
-      if (haveIncomeData) {                
-        // read the packet into packetBufffer
-        int len = udp.read(incomeBuffer, UDP_PACKET_MAX_SIZE);
-        if (len > 0) {          
-          incomeBuffer[len] = 0;
-        }
-        bufIdx = 0;
-        
-        delay(0);            // ESP8266 при вызове delay отпрабатывает стек IP протокола, дадим ему поработать        
-
-        Serial.print(F("UDP пакeт размером "));
-        Serial.print(packetSize);
-        Serial.print(F(" от "));
-        IPAddress remote = udp.remoteIP();
-        for (int i = 0; i < 4; i++) {
-          Serial.print(remote[i], DEC);
-          if (i < 3) {
-            Serial.print(F("."));
-          }
-        }
-        Serial.print(F(", порт "));
-        Serial.println(udp.remotePort());
-        if (udp.remotePort() == localPort) {
-          Serial.print(F("Содержимое: "));
-          Serial.println(incomeBuffer);
+      Serial.print(F("UDP пакeт размером "));
+      Serial.print(packetSize);
+      Serial.print(F(" от "));
+      IPAddress remote = udp.remoteIP();
+      for (int i = 0; i < 4; i++) {
+        Serial.print(remote[i], DEC);
+        if (i < 3) {
+          Serial.print(F("."));
         }
       }
-
-      // NTP packet from time server
-      if (haveIncomeData && udp.remotePort() == 123) {
-        parseNTP();
-        haveIncomeData = false;
+      Serial.print(F(", порт "));
+      Serial.println(udp.remotePort());
+      if (udp.remotePort() == localPort) {
+        Serial.print(F("Содержимое: "));
+        Serial.println(incomeBuffer);
       }
     }
 
-    if (haveIncomeData) {         
-      if (parseMode == TEXT) {                         // если нужно принять строку - принимаем всю
-          // Из за ошибки в компоненте UdpSender в Thunkable - теряются половина отправленных 
-          // символов, если их кодировка - двухбайтовый UTF8, т.к. оно вычисляет длину строки без учета двухбайтовости
-          // Чтобы символы не терялись - при отправке строки из андроид-программы, она добивается с конца пробелами
-          // Здесь эти конечные пробелы нужно предварительно удалить
-          while (packetSize > 0 && incomeBuffer[packetSize-1] == ' ') packetSize--;
-          incomeBuffer[packetSize] = 0;
-
-          // Оставшийся буфер преобразуем с строку
-          if (intData[0] == 6) {  // текст
-            receiveText = String(&incomeBuffer[bufIdx]);
-            receiveText.trim();
-          }
-                    
-          incomingByte = ending;                       // сразу завершаем парс
-          parseMode = NORMAL;
-          bufIdx = 0; 
-          packetSize = 0;                              // все байты из входящего пакета обработаны
-        } else {
-          incomingByte = incomeBuffer[bufIdx++];       // обязательно ЧИТАЕМ входящий символ
-      } 
-    }       
+    // NTP packet from time server
+    if (haveIncomeData && udp.remotePort() == 123) {
+      parseNTP();
+      haveIncomeData = false;
+      bufIdx = 0;      
+    }
   }
-  
+
+  if (haveIncomeData) {         
+
+    // Из за ошибки в компоненте UdpSender в Thunkable - теряются половина отправленных 
+    // символов, если их кодировка - двухбайтовый UTF8, т.к. оно вычисляет длину строки без учета двухбайтовости
+    // Чтобы символы не терялись - при отправке строки из андроид-программы, она добивается с конца пробелами
+    // Здесь эти конечные пробелы нужно предварительно удалить
+    while (packetSize > 0 && incomeBuffer[packetSize-1] == ' ') packetSize--;
+    incomeBuffer[packetSize] = 0;
+
+    if (parseMode == TEXT) {                         // если нужно принять строку - принимаем всю
+
+        // Оставшийся буфер преобразуем с строку
+        if (intData[0] == 6) {  // текст
+          receiveText = String(&incomeBuffer[bufIdx]);
+          receiveText.trim();
+        }
+                  
+        incomingByte = ending;                       // сразу завершаем парс
+        parseMode = NORMAL;
+        bufIdx = 0; 
+        packetSize = 0;                              // все байты из входящего пакета обработаны
+      } else {
+        incomingByte = incomeBuffer[bufIdx++];       // обязательно ЧИТАЕМ входящий символ
+    } 
+  }       
+    
   if (haveIncomeData) {
 
     if (parseStarted) {                                             // если приняли начальный символ (парсинг разрешён)
@@ -865,6 +866,7 @@ void parsing() {
       parseMode == NORMAL;
       parseStarted = false;                         // сброс
       recievedFlag = true;                          // флаг на принятие
+      bufIdx = 0;
     }
 
     if (bufIdx >= packetSize) {                     // Весь буфер разобран 

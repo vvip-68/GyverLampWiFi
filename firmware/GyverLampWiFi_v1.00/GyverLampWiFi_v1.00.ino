@@ -36,6 +36,7 @@
 #define AUTOPLAY_PERIOD 60    // время между авто сменой режимов (секунды)
 #define IDLE_TIME 30          // время бездействия (в минутах) после которого запускается автосмена режимов
 #define SMOOTH_CHANGE 0       // плавная смена режимов через чёрный
+#define USE_MP3 0             // поставьте 0, если у вас нет звуковой карты MP3 плеера
 
 // ****************** ПИНЫ ПОДКЛЮЧЕНИЯ *******************
 // пины подписаны согласно pinout платы, а не надписям на пинах!
@@ -258,8 +259,10 @@ void setup() {
 
   randomSeed(analogRead(1));    // пинаем генератор случайных чисел
 
-  // Первый этап инициализации плеера - подключение и основные настройки  
-  InitializeDfPlayer1();
+  // Первый этап инициализации плеера - подключение и основные настройки
+  #if (USE_MP3 == 1)
+    InitializeDfPlayer1();
+  #endif
      
   WiFi.setSleepMode(WIFI_NONE_SLEEP);
 
@@ -289,9 +292,13 @@ void setup() {
   FastLED.clear();
   FastLED.show();
 
-  // Второй этап инициализации плеера - проверка наличия файлов звуков на SD карте  
-  InitializeDfPlayer2();
-  if (!isDfPlayerOk) Serial.println(F("MP3 плеер недоступен."));
+  // Второй этап инициализации плеера - проверка наличия файлов звуков на SD карте
+  #if (USE_MP3 == 1)
+    InitializeDfPlayer2();
+    if (!isDfPlayerOk) {
+      Serial.println(F("MP3 плеер недоступен."));
+    }
+  #endif
 
   setSpecialMode(0);
   isTurnedOff = true;   

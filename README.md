@@ -93,7 +93,10 @@
 
 <a id="chapter-2"></a>
 ## Схема
+### С сенсорной кнопкой
 ![SCHEME](https://github.com/vvip-68/GyverLampWiFi/blob/master/schemes/scheme.jpg)
+### С обычной кнопкой
+![SCHEME](https://github.com/vvip-68/GyverLampWiFi/blob/master/schemes/scheme_b.jpg)
 
 <a id="chapter-3"></a>
 ## Материалы и компоненты

@@ -649,16 +649,16 @@ void setTurnOffClockOnLampOff(bool flag) {
 
 // ----------------------------------------------------------
 
-byte EEPROMread(byte addr) {    
+byte EEPROMread(uint16_t addr) {    
   return EEPROM.read(addr);
 }
 
-void EEPROMwrite(byte addr, byte value) {    
+void EEPROMwrite(uint16_t addr, byte value) {    
   EEPROM.write(addr, value);
 }
 
 // чтение uint16_t
-uint16_t EEPROM_int_read(byte addr) {    
+uint16_t EEPROM_int_read(uint16_t addr) {    
   byte raw[2];
   for (byte i = 0; i < 2; i++) raw[i] = EEPROMread(addr+i);
   uint16_t &num = (uint16_t&)raw;
@@ -666,14 +666,14 @@ uint16_t EEPROM_int_read(byte addr) {
 }
 
 // запись uint16_t
-void EEPROM_int_write(byte addr, uint16_t num) {
+void EEPROM_int_write(uint16_t addr, uint16_t num) {
   byte raw[2];
   (uint16_t&)raw = num;
   for (byte i = 0; i < 2; i++) EEPROMwrite(addr+i, raw[i]);
 }
 
 // чтение стоки (макс 32 байта)
-String EEPROM_string_read(byte addr, byte len) {
+String EEPROM_string_read(uint16_t addr, byte len) {
    if (len>32) len = 32;
    char buffer[len+1];
    memset(buffer,'\0',len+1);
@@ -689,7 +689,7 @@ String EEPROM_string_read(byte addr, byte len) {
 }
 
 // запись строки (макс 32 байта)
-void EEPROM_string_write(byte addr, String buffer) {
+void EEPROM_string_write(uint16_t addr, String buffer) {
    uint16_t len = buffer.length();
    if (len>32) len = 32;
    byte i = 0;

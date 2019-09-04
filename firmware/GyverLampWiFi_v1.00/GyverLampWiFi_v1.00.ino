@@ -154,7 +154,7 @@ int effectSpeed = D_EFFECT_SPEED;  // скрость изменения эффе
 bool BTcontrol = false;            // флаг: true - ручное управление эффектами; false - в режиме Autoplay
 bool loadingFlag = true;           // флаг: инициализация параметров эффекта
 bool idleState = true;             // флаг холостого режима работы
-byte thisMode = 0;                 // текущий режим
+int8_t thisMode = 0;               // текущий режим
 int8_t hrs = 0, mins = 0, secs = 0, aday = 1, amnth = 1;
 int16_t ayear = 1970;
 bool dotFlag;
@@ -301,12 +301,12 @@ void setup() {
   #endif
 
   setSpecialMode(0);
-  isTurnedOff = true;   
+  isTurnedOff = true;
 }
 
-void loop() {  
+void loop() {
   process();
-  ESP.wdtFeed();  
+  ESP.wdtFeed();
 }
 
 // -----------------------------------------

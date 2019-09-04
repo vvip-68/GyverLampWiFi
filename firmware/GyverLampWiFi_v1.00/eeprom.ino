@@ -29,7 +29,8 @@ void loadSettings() {
   //   25 - Будильник, Номер мелодии будильника (из папки 01 на SD карте)
   //   26 - Будильник, Номер мелодии рассвета (из папки 02 на SD карте) 
   //   27 - Будильник, Максимальная громкость будильника
-  //   28 - зарезервировано
+  //   28 - Номер последнего активного спец-режима или -1, если были включены обычные эффекты
+  //   29 - зарезервировано
   //   ...
   //   32 - зарезервировано
   //   33 - Режим 1 по времени - часы
@@ -645,6 +646,17 @@ void setTurnOffClockOnLampOff(bool flag) {
     EEPROMwrite(9, flag ? 1 : 0);
     eepromModified = true;
   }  
+}
+
+int8_t getCurrentSpecMode() {
+  return (int8_t)EEPROMread(28);
+}
+
+void setCurrentSpecMode(int8_t mode) {
+  if (mode != getCurrentSpecMode()) {
+    EEPROMwrite(28, (byte)mode);
+    eepromModified = true;
+  }
 }
 
 // ----------------------------------------------------------

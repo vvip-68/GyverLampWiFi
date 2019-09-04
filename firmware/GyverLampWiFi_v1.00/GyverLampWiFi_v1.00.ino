@@ -301,8 +301,28 @@ void setup() {
     }
   #endif
 
-  setSpecialMode(0);
-  isTurnedOff = true;
+  // Если был задан спец.режим во время предыдущего сеанса работы матрицы - включить его
+  // Номер спец-режима запоминается при его включении и сбрасывается при включении обычного режима или игры
+  // Это позволяет в случае внезапной перезагрузки матрицы (например по wdt), когда был включен спец-режим (например ночные часы или выкл. лампы)
+  // снова включить его, а не отображать случайный обычный после включения матрицы
+  int8_t spc_mode = getCurrentSpecMode();
+  if (spc_mode >= 0 && spc_mode <= 5) {
+    setSpecialMode(spc_mode);
+    isTurnedOff = spc_mode == 0;
+  } else {
+    while (1) {
+      // Если режим отмечен флагом "использовать" - используем его, иначе берем следующий (и проверяем его)
+      if (getEffectUsage(thisMode)) break;
+      thisMode++;
+      if (thisMode >= MAX_EFFECT) {
+        thisMode = 0;
+        break;
+      }
+    }
+    setTimersForMode(thisMode);
+    AUTOPLAY = true;
+    autoplayTimer = millis();
+  }
 }
 
 void loop() {

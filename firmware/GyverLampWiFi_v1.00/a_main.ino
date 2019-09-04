@@ -1095,6 +1095,8 @@ void setSpecialMode(int spc_mode) {
     FastLED.setBrightness(specialBrightness);
     specialModeId = spc_mode;
   }  
+  
+  setCurrentSpecMode(spc_mode);
 }
 
 void resetModes() {
@@ -1112,6 +1114,7 @@ void setEffect(byte eff) {
   thisMode = eff;
 
   setTimersForMode(thisMode);  
+  setCurrentSpecMode(-1);
 
   if (thisMode != MC_DAWN_ALARM)
     FastLED.setBrightness(globalBrightness);      

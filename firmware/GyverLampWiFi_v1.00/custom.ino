@@ -33,37 +33,41 @@
 void customRoutine(byte aMode) {
 
   if (effectTimer.isReady() || aMode > MAX_EFFECT) {
-    switch (aMode) {
-      case MC_NOISE_MADNESS:       madnessNoise(); break;
-      case MC_NOISE_CLOUD:         cloudNoise(); break;
-      case MC_NOISE_LAVA:          lavaNoise(); break;
-      case MC_NOISE_PLASMA:        plasmaNoise(); break;
-      case MC_NOISE_RAINBOW:       rainbowNoise(); break;
-      case MC_NOISE_RAINBOW_STRIP: rainbowStripeNoise(); break;
-      case MC_NOISE_ZEBRA:         zebraNoise(); break;
-      case MC_NOISE_FOREST:        forestNoise(); break;
-      case MC_NOISE_OCEAN:         oceanNoise(); break;
-      case MC_SNOW:                snowRoutine(); break;
-      case MC_SPARKLES:            sparklesRoutine(); break;
-      case MC_MATRIX:              matrixRoutine(); break;
-      case MC_STARFALL:            starfallRoutine(); break;
-      case MC_BALL:                ballRoutine(); break;
-      case MC_BALLS:               ballsRoutine(); break;
-      case MC_RAINBOW_HORIZ:       rainbowHorizontal(); break;
-      case MC_RAINBOW_VERT:        rainbowVertical(); break;
-      case MC_RAINBOW_DIAG:        rainbowDiagonalRoutine(); break;
-      case MC_FIRE:                fireRoutine(); break;
-      case MC_FILL_COLOR:          fillColorProcedure(); break;
-      case MC_COLORS:              colorsRoutine(); break;
-      case MC_LIGHTERS:            lightersRoutine(); break;
-      case MC_DAWN_ALARM:          dawnProcedure(); break;
-  
-      // Специальные режимы - доступные только для вызова из эффекта рассвета - dawnProcedure()
-      case MC_DAWN_ALARM_SPIRAL:   dawnLampSpiral(); break;
-      case MC_DAWN_ALARM_SQUARE:   dawnLampSquare(); break;
-    }
-    FastLED.show();
+    processEffect(aMode);
   }
+}
+
+void processEffect(byte aMode) {
+  switch (aMode) {
+    case MC_NOISE_MADNESS:       madnessNoise(); break;
+    case MC_NOISE_CLOUD:         cloudNoise(); break;
+    case MC_NOISE_LAVA:          lavaNoise(); break;
+    case MC_NOISE_PLASMA:        plasmaNoise(); break;
+    case MC_NOISE_RAINBOW:       rainbowNoise(); break;
+    case MC_NOISE_RAINBOW_STRIP: rainbowStripeNoise(); break;
+    case MC_NOISE_ZEBRA:         zebraNoise(); break;
+    case MC_NOISE_FOREST:        forestNoise(); break;
+    case MC_NOISE_OCEAN:         oceanNoise(); break;
+    case MC_SNOW:                snowRoutine(); break;
+    case MC_SPARKLES:            sparklesRoutine(); break;
+    case MC_MATRIX:              matrixRoutine(); break;
+    case MC_STARFALL:            starfallRoutine(); break;
+    case MC_BALL:                ballRoutine(); break;
+    case MC_BALLS:               ballsRoutine(); break;
+    case MC_RAINBOW_HORIZ:       rainbowHorizontal(); break;
+    case MC_RAINBOW_VERT:        rainbowVertical(); break;
+    case MC_RAINBOW_DIAG:        rainbowDiagonalRoutine(); break;
+    case MC_FIRE:                fireRoutine(); break;
+    case MC_FILL_COLOR:          fillColorProcedure(); break;
+    case MC_COLORS:              colorsRoutine(); break;
+    case MC_LIGHTERS:            lightersRoutine(); break;
+    case MC_DAWN_ALARM:          dawnProcedure(); break;
+    
+    // Спец.режимы так же как и обычные вызываются в customModes (MC_DAWN_ALARM_SPIRAL и MC_DAWN_ALARM_SQUARE)
+    case MC_DAWN_ALARM_SPIRAL:   dawnLampSpiral(); break;
+    case MC_DAWN_ALARM_SQUARE:   dawnLampSquare(); break;
+  }
+  FastLED.show();
 }
 
 // ********************* ОСНОВНОЙ ЦИКЛ РЕЖИМОВ *******************

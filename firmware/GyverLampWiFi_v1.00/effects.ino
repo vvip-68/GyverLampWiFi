@@ -520,9 +520,17 @@ void dawnProcedure() {
     effect = DEVICE_TYPE == 0 ? MC_DAWN_ALARM_SPIRAL : MC_DAWN_ALARM_SQUARE;
   }
 
-  // Спец.режимы так же как и обычные вызываются в customModes (MC_DAWN_ALARM_SPIRAL и MC_DAWN_ALARM_SQUARE)
-  customRoutine(effect);
+  // Если эффект "Лампа" и цвет - черный (остался от "выключено" - выбрать цвет лампы из сохраненных эффектов "Цветная лампа"
+  if (effect == MC_FILL_COLOR && globalColor == 0) {
+     globalColor = getColorInt(CHSV(getEffectSpeed(MC_FILL_COLOR), effectScaleParam[MC_FILL_COLOR], 255));
+  }
+  if (effect == MC_FILL_COLOR && globalColor == 0) {
+     globalColor = 0xFFFFFF;          
+  }
 
+  // Сформировать изображение эффекта
+  processEffect(effect);
+  
   // Сбрасывать флаг нужно ПОСЛЕ того как инициализированы: И процедура рассвета И применяемый эффект,
   // используемый в качестве рассвета
   loadingFlag = false;
@@ -742,7 +750,11 @@ void fillColorProcedure() {
     loadingFlag = false;
   }
 
-  byte bright = specialMode ? specialBrightness : globalBrightness;
+  byte bright =
+    isAlarming && !isAlarmStopped 
+    ? dawnBrightness
+    : (specialMode ? specialBrightness : globalBrightness);
+
   FastLED.setBrightness(bright);  
 
   fillAll(globalColor);    

@@ -126,16 +126,16 @@ void prevModeHandler() {
 
   while (aCnt < MAX_EFFECT) {
     // Берем предыдущий режим по циклу режимов
-    aCnt++; thisMode--;  
-    if (thisMode < 0) thisMode = MAX_EFFECT - 1;
+    aCnt++; thisMode--; // thisMode: byte => при переполнении вернет 255 
+    if (thisMode >= MAX_EFFECT) thisMode = MAX_EFFECT - 1;
 
     // Если новый режим отмечен флагом "использовать" - используем его, иначе берем следующий (и проверяем его)
     if (getEffectUsage(thisMode)) break;
     
     // Если перебрали все и ни у адного нет флага "использовать" - не обращаем внимание на флаг, используем следующий
     if (aCnt >= MAX_EFFECT) {
-      thisMode = curMode--;
-      if (thisMode < 0) thisMode = MAX_EFFECT - 1;
+      thisMode = curMode--; // thisMode: byte => при переполнении вернет 255
+      if (thisMode >= MAX_EFFECT) thisMode = MAX_EFFECT - 1;
       break;
     }   
     ESP.wdtFeed(); 

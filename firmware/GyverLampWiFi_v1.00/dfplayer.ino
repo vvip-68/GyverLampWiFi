@@ -92,7 +92,7 @@ void refreshDfPlayerFiles() {
     delay(100);
     Serial.print(F("."));
   } while ((val = 0 || new_val == 0 || val != new_val) && cnt < 5);
-  alarmSoundsCount = val;
+  alarmSoundsCount = val < 0 ? 0 : val;
   
   // Папка с файлами для рассвета
   cnt = 0, val = 0, new_val = 0; 
@@ -104,7 +104,7 @@ void refreshDfPlayerFiles() {
     delay(100);
     Serial.print(F("."));
   } while ((val = 0 || new_val == 0 || val != new_val) && cnt < 5);    
-  dawnSoundsCount = val;
+  dawnSoundsCount = val < 0 ? 0 : val;
   Serial.println();  
 }
 

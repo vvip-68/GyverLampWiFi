@@ -80,6 +80,7 @@ CRGB leds[NUM_LEDS];
 #define MC_DAWN_ALARM           22
 
 #define MAX_EFFECT              23         // количество эффектов, определенных в прошивке
+#define MAX_SPEC_EFFECT          7         // количество эффектов быстрого доступа, определенных в прошивке
 
 // ---------------------------------
 #define MC_DAWN_ALARM_SPIRAL 253           // Специальный режим, вызывается из DEMO_DAWN_ALARM для ламп на круговой матрице - огонек по спирали
@@ -306,7 +307,7 @@ void setup() {
   // Это позволяет в случае внезапной перезагрузки матрицы (например по wdt), когда был включен спец-режим (например ночные часы или выкл. лампы)
   // снова включить его, а не отображать случайный обычный после включения матрицы
   int8_t spc_mode = getCurrentSpecMode();
-  if (spc_mode >= 0 && spc_mode <= 5) {
+  if (spc_mode >= 0 && spc_mode <= MAX_SPEC_EFFECT) {
     setSpecialMode(spc_mode);
     isTurnedOff = spc_mode == 0;
   } else {

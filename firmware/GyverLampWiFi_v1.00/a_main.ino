@@ -282,6 +282,10 @@ void parsing() {
        - $14 1; Белый экран (освещение);  
        - $14 2; Цветной экран;  
        - $14 3; Огонь;  
+       - $14 4; Конфетти;  
+       - $14 5; Радуга;  
+       - $14 6; Матрица;  
+       - $14 7; Светлячки;  
     15 - скорость $15 скорость таймер; 0 - таймер эффектов
     16 - Режим смены эффектов: $16 value; N:  0 - Autoplay on; 1 - Autoplay off; 2 - PrevMode; 3 - NextMode
     17 - Время автосмены эффектов и бездействия: $17 сек сек;
@@ -525,14 +529,12 @@ void parsing() {
           autoplayTimer = millis();
           BTcontrol = false;
         }
+        if (idleTime == 0) // тамймер отключен
+          idleTimer.setInterval(4294967295);
+        else
+          idleTimer.setInterval(idleTime);
+        idleTimer.reset();
         idleState = !BTcontrol && AUTOPLAY; 
-        if (idleState) {
-          if (idleTime == 0) // тамймер отключен
-            idleTimer.setInterval(4294967295);
-          else
-            idleTimer.setInterval(idleTime);
-          idleTimer.reset();
-        }
         saveSettingsTimer.reset();
         sendAcknowledge();
         break;
@@ -1080,6 +1082,12 @@ void setSpecialMode(int spc_mode) {
       break;
     case 5:  // Радуга;
       tmp_eff = MC_RAINBOW_DIAG;
+      break;
+    case 6:  // Матрица;
+      tmp_eff = MC_MATRIX;
+      break;
+    case 7:  // Светлячки;
+      tmp_eff = MC_LIGHTERS;
       break;
   }
 

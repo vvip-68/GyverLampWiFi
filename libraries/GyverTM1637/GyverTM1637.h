@@ -64,12 +64,12 @@ class GyverTM1637
   private:
     uint8_t lastData[4];
 	void update();
-    int  writeByte(uint8_t wr_data);
+    int  writeByte(int8_t wr_data);
     void start(void);
     void stop(void);
 	
-	void sendByte(uint8_t BitAddr, uint8_t sendData);
-	void sendArray(uint8_t sendData[]);
+    void sendByte(uint8_t BitAddr, int8_t sendData);
+    void sendArray(uint8_t sendData[]);
 
     uint8_t Cmd_SetData;
     uint8_t Cmd_SetAddr;

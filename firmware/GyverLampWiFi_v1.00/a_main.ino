@@ -242,7 +242,7 @@ byte parse_index;
 String string_convert = "";
 String receiveText = "";
 
-enum modes {NORMAL, COLOR, TEXT} parseMode;
+enum eModes {NORMAL, COLOR, TEXT} parseMode;
 
 bool haveIncomeData = false;
 char incomingByte;

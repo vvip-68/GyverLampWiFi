@@ -1,8 +1,8 @@
 #include "GyverTM1637.h"
 #include <Arduino.h>
-static uint8_t TubeTab[] = {0x3f, 0x06, 0x5b, 0x4f,
-                            0x66, 0x6d, 0x7d, 0x07,
-                            0x7f, 0x6f, 0x00, 0x40};		//0~9, ,-
+static int8_t TubeTab[] = {0x3f, 0x06, 0x5b, 0x4f,
+                           0x66, 0x6d, 0x7d, 0x07,
+                           0x7f, 0x6f, 0x00, 0x40};		//0~9, ,-
 GyverTM1637::GyverTM1637(uint8_t clk, uint8_t dio)
 {
   Clkpin = clk;
@@ -11,7 +11,7 @@ GyverTM1637::GyverTM1637(uint8_t clk, uint8_t dio)
   pinMode(Datapin, OUTPUT);
 }
 
-int GyverTM1637::writeByte(uint8_t wr_data)
+int GyverTM1637::writeByte(int8_t wr_data)
 {
   uint8_t i, count1;
   for (i = 0; i < 8; i++) //sent 8bit data
@@ -111,7 +111,7 @@ void GyverTM1637::displayByte(uint8_t BitAddr, uint8_t DispData)
 }
 
 // ************************** ОТПРАВКА НА ДИСПЛЕЙ *****************************
-void GyverTM1637::sendByte(uint8_t BitAddr, uint8_t sendData) {
+void GyverTM1637::sendByte(uint8_t BitAddr, int8_t sendData) {
   start();          //start signal sent to GyverTM1637 from MCU
   writeByte(ADDR_FIXED);//
   stop();           //

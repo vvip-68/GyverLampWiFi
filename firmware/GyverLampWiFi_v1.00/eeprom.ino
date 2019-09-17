@@ -481,7 +481,7 @@ String getSoftAPName() {
 
 void setSoftAPName(String SoftAPName) {
   if (SoftAPName != getSoftAPName()) {
-    EEPROM_string_write(54, SoftAPName);
+    EEPROM_string_write(54, SoftAPName, 10);
     eepromModified = true;
   }
 }
@@ -492,7 +492,7 @@ String getSoftAPPass() {
 
 void setSoftAPPass(String SoftAPPass) {
   if (SoftAPPass != getSoftAPPass()) {
-    EEPROM_string_write(64, SoftAPPass);
+    EEPROM_string_write(64, SoftAPPass, 16);
     eepromModified = true;
   }
 }
@@ -503,7 +503,7 @@ String getSsid() {
 
 void setSsid(String Ssid) {
   if (Ssid != getSsid()) {
-    EEPROM_string_write(80, Ssid);
+    EEPROM_string_write(80, Ssid, 24);
     eepromModified = true;
   }
 }
@@ -514,7 +514,7 @@ String getPass() {
 
 void setPass(String Pass) {
   if (Pass != getPass()) {
-    EEPROM_string_write(104, Pass);
+    EEPROM_string_write(104, Pass, 16);
     eepromModified = true;
   }
 }
@@ -525,7 +525,7 @@ String getNtpServer() {
 
 void setNtpServer(String server) {
   if (server != getNtpServer()) {
-    EEPROM_string_write(120, server);
+    EEPROM_string_write(120, server, 30);
     eepromModified = true;
   }
 }
@@ -567,7 +567,7 @@ int8_t getAM1effect() {
 }
 
 void setAM1effect(int8_t effect) {
-  if (effect != getAM1minute()) {
+  if (effect != getAM1effect()) {
     EEPROMwrite(35, (byte)effect);
     eepromModified = true;
   }
@@ -610,7 +610,7 @@ int8_t getAM2effect() {
 }
 
 void setAM2effect(int8_t effect) {
-  if (effect != getAM2minute()) {
+  if (effect != getAM2effect()) {
     EEPROMwrite(38, (byte)effect);
     eepromModified = true;
   }
@@ -684,31 +684,27 @@ void EEPROM_int_write(uint16_t addr, uint16_t num) {
   for (byte i = 0; i < 2; i++) EEPROMwrite(addr+i, raw[i]);
 }
 
-// чтение стоки (макс 32 байта)
-String EEPROM_string_read(uint16_t addr, byte len) {
-   if (len>32) len = 32;
+String EEPROM_string_read(uint16_t addr, int16_t len) {
    char buffer[len+1];
    memset(buffer,'\0',len+1);
-   byte i = 0;
+   int16_t i = 0;
    while (i < len) {
      byte c = EEPROMread(addr+i);
-     if (isAlphaNumeric(c) || isPunct(c))
-        buffer[i++] = c;
-     else
-       break;
+     if (c == 0) break;
+     buffer[i++] = c;
+     // if (c != 0 && (isAlphaNumeric(c) || isPunct(c) || isSpace(c)))
    }
    return String(buffer);
 }
 
-// запись строки (макс 32 байта)
-void EEPROM_string_write(uint16_t addr, String buffer) {
+void EEPROM_string_write(uint16_t addr, String buffer, int16_t max_len) {
    uint16_t len = buffer.length();
-   if (len>32) len = 32;
-   byte i = 0;
+   int16_t i = 0;
+   if (len > max_len) len = max_len;
    while (i < len) {
      EEPROMwrite(addr+i, buffer[i++]);
    }
-   if (i < 32) EEPROMwrite(addr+i,0);
+   if (i < max_len) EEPROMwrite(addr+i,0);
 }
 
 // ----------------------------------------------------------

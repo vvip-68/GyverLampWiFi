@@ -328,7 +328,6 @@ void saveIdleTime(long value) {
 
 long getIdleTime() {
   long time = EEPROMread(4) * 60 * 1000L;  
-  time = ((long)IDLE_TIME * 60L * 1000L);
   return time;
 }
 

@@ -161,7 +161,7 @@ String cmd95 = "";                 // Строка, формируемая sendP
 String cmd96 = "";                 // Строка, формируемая sendPageParams(96) для отправки по инициативе сервера
 
 static const byte maxDim = max(WIDTH, HEIGHT);
-int globalBrightness = BRIGHTNESS;
+byte globalBrightness = BRIGHTNESS;
 bool brightDirection = false;      // true - увеличение яркости; false - уменьшение яркости
 
 int effectSpeed = D_EFFECT_SPEED;  // скрость изменения эффекта (по умолчанию)

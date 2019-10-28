@@ -7,6 +7,7 @@
 
 // ************************ WIFI ЛАМПА *************************
 
+#define FIRMWARE_VER F("\n\nGyverLamp-WiFi v.1.00.2019.1028")
 #define FASTLED_INTERRUPT_RETRY_COUNT 0
 #define FASTLED_ALLOW_INTERRUPTS 0
 
@@ -273,7 +274,7 @@ void setup() {
   Serial.begin(115200);
   delay(10);
   
-  Serial.println(F("\n\nWiFi Lamp v.1.00.2019.1025"));
+  Serial.println(FIRMWARE_VER);
   
   EEPROM.begin(256);
   loadSettings();

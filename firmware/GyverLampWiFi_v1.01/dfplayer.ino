@@ -109,11 +109,7 @@ void refreshDfPlayerFiles() {
 }
 
 void PlayAlarmSound() {
-
-  isPlayAlarmSound = true;
-  alarmSoundTimer.setInterval(alarmDuration * 60000L);
-  alarmSoundTimer.reset();
-
+  
   if (!isDfPlayerOk) return;
   
   int8_t sound = alarmSound;
@@ -131,6 +127,9 @@ void PlayAlarmSound() {
     delay(100);
     dfPlayer.enableLoop();
     delay(100);    
+    alarmSoundTimer.setInterval(alarmDuration * 60L * 1000L);
+    alarmSoundTimer.reset();
+    isPlayAlarmSound = true;
   } else {
     // Звука будильника нет - плавно выключить звук рассвета
     StopSound(1000);
@@ -167,9 +166,10 @@ void PlayDawnSound() {
 }
 
 void StopSound(int duration) {
+
+  if (!isDfPlayerOk) return;
   
   isPlayAlarmSound = false;
-  if (!isDfPlayerOk) return;
 
   if (duration <= 0) {
     dfPlayer.stop();

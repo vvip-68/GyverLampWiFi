@@ -158,9 +158,6 @@ void nextModeHandler() {
       if (thisMode >= MAX_EFFECT) thisMode = 0;
       break;
     }
-#if defined(ESP8266)
-    ESP.wdtFeed(); 
-#endif
   }
   
   loadingFlag = true;
@@ -196,9 +193,6 @@ void prevModeHandler() {
       if (thisMode >= MAX_EFFECT) thisMode = MAX_EFFECT - 1;
       break;
     }
-#if defined(ESP8266)
-    ESP.wdtFeed(); 
-#endif
   }
   
   loadingFlag = true;

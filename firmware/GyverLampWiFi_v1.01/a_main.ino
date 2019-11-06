@@ -522,7 +522,7 @@ void parsing() {
           effectSpeed = 255 - intData[1]; 
           saveEffectSpeed(thisMode, effectSpeed);
           if (thisMode == MC_FILL_COLOR) { 
-            globalColor = getColorInt(CHSV(effectSpeed, effectScaleParam[MC_FILL_COLOR], 255));    
+            globalColor = getColorInt(CHSV(effectSpeed, effectScaleParam[MC_FILL_COLOR], 255));
             setGlobalColor(globalColor);
           }
           setTimersForMode(thisMode);           
@@ -822,7 +822,7 @@ void parsing() {
        - $22 HH1 MM1 NN1 HH2 MM2 NN2
            HHn - час срабатывания
            MMn - минуты срабатывания
-           NNn - эффект: -2 - выключено; -1 - выключить матрицу; 0 - случайный режим и далее по кругу; 1 и далее - список режимов ALARM_LIST 
+           NNn - эффект: -2 - выключено; -1 - выключить матрицу; 0 - случайный режим и далее по кругу; 1 и далее - список режимов EFFECT_LIST 
       */    
         AM1_hour = intData[1];
         AM1_minute = intData[2];
@@ -1041,7 +1041,7 @@ void sendPageParams(int page) {
   // ST:число    скорость смещения текстовых часов
   // C1:цвет     цвет режима "монохром" часов оверлея; цвет: 192,96,96 - R,G,B
   // C2:цвет     цвет режима "монохром" текстовых часов; цвет: 192,96,96 - R,G,B
-  
+
   String str = "", color, text;
   boolean allowed;
   byte b_tmp;
@@ -1251,7 +1251,7 @@ void setSpecialMode(int spc_mode) {
   }
 
   if (tmp_eff >= 0) {    
-    // Дльнейшее отображение изображения эффекта будет выполняться стандартной процедурой customRoutin()
+    // Дльнейшее отображение изображения эффекта будет выполняться стандартной процедурой customRoutine()
     thisMode = tmp_eff;
     specialMode = true;
     setTimersForMode(thisMode);

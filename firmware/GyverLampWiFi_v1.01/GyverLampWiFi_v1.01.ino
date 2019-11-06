@@ -330,7 +330,13 @@ char ntpServerName[31] = "";             // Используемый серве�
 
 timerMinim ntpSyncTimer(1000 * 60 * SYNC_TIME_PERIOD);            // Сверяем время с NTP-сервером через SYNC_TIME_PERIOD минут
 
+#if defined(ESP8266)
 SoftwareSerial mp3Serial(SRX, STX);
+#endif
+
+#if defined(ESP32)
+SoftwareSerial mp3Serial;
+#endif
 
 DFRobotDFPlayerMini dfPlayer; 
 bool isDfPlayerOk = false;

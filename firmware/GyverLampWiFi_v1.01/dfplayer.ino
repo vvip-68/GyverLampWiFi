@@ -1,5 +1,12 @@
 void InitializeDfPlayer1() {
+#if defined(ESP8266)
   mp3Serial.begin(9600);  
+#endif
+
+#if defined(ESP32)
+  mp3Serial.begin(9600, SRX, STX);  
+#endif
+
   dfPlayer.begin(mp3Serial, true, true);
   dfPlayer.setTimeOut(2000);
   dfPlayer.EQ(DFPLAYER_EQ_NORMAL);

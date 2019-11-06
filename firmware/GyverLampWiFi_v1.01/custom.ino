@@ -86,6 +86,7 @@ void processEffect(byte aMode) {
     case MC_NOISE_LAVA:          lavaNoise(); break;
     case MC_NOISE_PLASMA:        plasmaNoise(); break;
     case MC_NOISE_RAINBOW:       rainbowNoise(); break;
+    case MC_PAINTBALL:           lightBallsRoutine(); break;
     case MC_NOISE_RAINBOW_STRIP: rainbowStripeNoise(); break;
     case MC_NOISE_ZEBRA:         zebraNoise(); break;
     case MC_NOISE_FOREST:        forestNoise(); break;
@@ -156,8 +157,10 @@ void nextModeHandler() {
       thisMode = curMode++;
       if (thisMode >= MAX_EFFECT) thisMode = 0;
       break;
-    }   
+    }
+#if defined(ESP8266)
     ESP.wdtFeed(); 
+#endif
   }
   
   loadingFlag = true;
@@ -192,8 +195,10 @@ void prevModeHandler() {
       thisMode = curMode--; // thisMode: byte => при переполнении вернет 255
       if (thisMode >= MAX_EFFECT) thisMode = MAX_EFFECT - 1;
       break;
-    }   
+    }
+#if defined(ESP8266)
     ESP.wdtFeed(); 
+#endif
   }
   
   loadingFlag = true;

@@ -68,7 +68,7 @@ void lightBallsRoutine() {
   uint8_t  m = beatsin8( 123, BorderWidth, WIDTH-BorderWidth);
 
   // The color of each point shifts over time, each at a different speed.
-  uint16_t ms = millis();
+  uint32_t ms = millis();
   leds[XY( i, j)] += CHSV( ms / 29, 200U, 255U);
   leds[XY( j, k)] += CHSV( ms / 41, 200U, 255U);
   leds[XY( k, m)] += CHSV( ms / 73, 200U, 255U);

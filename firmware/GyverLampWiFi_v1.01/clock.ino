@@ -77,6 +77,7 @@ void getNTP() {
 #if defined(ESP32)
   if (timeServerIP==ip) timeServerIP.fromString(F("192.36.143.130"));  // Один из ru.pool.ntp.org // 195.3.254.2
 #endif
+  printNtpServerName();
   sendNTPpacket(timeServerIP); // send an NTP packet to a time server
   // wait to see if a reply is available
   ntp_t = millis();  
@@ -827,7 +828,7 @@ void SetAutoMode(byte amode) {
   int8_t ef = (amode == 1 ? AM1_effect_id : AM2_effect_id);
 
   //ef: -2 - нет действия; 
-  //    -1 - выключить лампы (черный экран); 
+  //    -1 - выключить лампу (черный экран); 
   //     0 - случайный,
   //     1 и далее - эффект из EFFECT_LIST по списку
 
@@ -924,7 +925,7 @@ void checkClockOrigin() {
 uint32_t getNightClockColorByIndex(byte idx) {
   uint32_t color = 0x010000;  // Red
   switch (idx) {
-    case 0: color = 0x020000; break;  // Red
+    case 0: color = 0x010000; break;  // Red
     case 1: color = 0x000200; break;  // Green
     case 2: color = 0x000002; break;  // Blue
     case 3: color = 0x000202; break;  // Cyan

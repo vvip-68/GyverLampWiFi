@@ -11,7 +11,7 @@
 
 // ************************ WIFI ЛАМПА *************************
 
-#define FIRMWARE_VER F("\n\nGyverLamp-WiFi v.1.01.2019.1104")
+#define FIRMWARE_VER F("\n\nGyverLamp-WiFi v.1.01.2019.1107")
 #define FASTLED_INTERRUPT_RETRY_COUNT 0
 #define FASTLED_ALLOW_INTERRUPTS 0
 /////#define FASTLED_ESP8266_RAW_PIN_ORDER

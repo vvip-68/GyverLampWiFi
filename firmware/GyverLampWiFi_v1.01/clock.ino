@@ -270,7 +270,8 @@ void clockTicker() {
     return;
   }
 
-  if (halfsecTimer.isReady()) {    
+  bool halfSec = halfsecTimer.isReady();
+  if (halfSec) {    
     clockHue += HUE_STEP;
     setOverlayColors();
     dotFlag = !dotFlag;
@@ -280,7 +281,7 @@ void clockTicker() {
     // Удержание кнопки - изменение яркости + 2 сек после того как кнопка отпущена - 
     // отображать показание текущего значения яркости в процентах 0..99
     if (isButtonHold) bCounter = 4;
-    if (!isButtonHold && bCounter > 0 && halfsecTimer.isReady()) bCounter--;
+    if (!isButtonHold && bCounter > 0 && halfSec) bCounter--;
     byte prcBrightness = map(globalBrightness,0,255,0,99);
     byte m10 = getByteForDigit(prcBrightness / 10);
     byte m01 = getByteForDigit(prcBrightness % 10);
@@ -300,9 +301,7 @@ void clockTicker() {
     }
   } else {
     // Отображение часов - разделительное двоеточие...
-    bool halfSec = halfsecTimer.isReady();
     if (halfSec) {
-      dotFlag = !dotFlag;
       disp.point(dotFlag);
     }
     // Если время еще не получено - отображать прочерки
@@ -346,17 +345,18 @@ void clockTicker() {
     return;
   }
 
-  if (halfsecTimer.isReady()) {    
+  bool halfSec = halfsecTimer.isReady();
+  if (halfSec) {    
     clockHue += HUE_STEP;
     setOverlayColors();
     dotFlag = !dotFlag;
   }
-  
+
   if (isButtonHold || bCounter > 0) {
     // Удержание кнопки - изменение яркости + 2 сек после того как кнопка отпущена - 
     // отображать показание текущего значения яркости в процентах 0..99
     if (isButtonHold) bCounter = 4;
-    if (!isButtonHold && bCounter > 0 && halfsecTimer.isReady()) bCounter--;
+    if (!isButtonHold && bCounter > 0 && halfSec) bCounter--;
     byte prcBrightness = map(globalBrightness,0,255,0,99);
     byte m10 = getByteForDigit(prcBrightness / 10);
     byte m01 = getByteForDigit(prcBrightness % 10);
@@ -376,9 +376,7 @@ void clockTicker() {
     }
   } else {
     // Отображение часов - разделительное двоеточие...
-    bool halfSec = halfsecTimer.isReady();
     if (halfSec) {
-      dotFlag = !dotFlag;
       display.point(dotFlag);
     }
     // Если время еще не получено - отображать прочерки

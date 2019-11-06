@@ -270,7 +270,7 @@ void saveSettings() {
   EEPROMwrite(0, EEPROM_OK);
   
   EEPROM.commit();
-  Serial.println(F("Настройки сохранены в EEPROM"));  
+  Serial.println(F("Настройки сохранены в EEPROM"));
   eepromModified = false;
 }
 
@@ -278,7 +278,7 @@ void saveEffectParams(byte effect, int speed, byte value, boolean use) {
   const int addr = EFFECT_EEPROM;  
   EEPROMwrite(addr + effect*3, constrain(map(speed, D_EFFECT_SPEED_MIN, D_EFFECT_SPEED_MAX, 0, 255), 0, 255));        // Скорость эффекта
   EEPROMwrite(addr + effect*3 + 1, value);                       // Параметр эффекта  
-  EEPROMwrite(addr + effect*3 + 2, use ? 1 : 0);                 // По умолчанию эффект доступен в демо-режиме
+  EEPROMwrite(addr + effect*3 + 2, use ? 1 : 0);                 // По умолчанию эффект доступен в демо-режиме  
   effectScaleParam[effect] = value;
 }
 

@@ -3,16 +3,30 @@
 // Страница проекта на GitHub: https://github.com/vvip-68/GyverLampWiFi
 // Автор: AlexGyver Technologies, 2019
 // Дальнейшее развитие: vvip, 2019
-// https://AlexGryAver.ru/
+// https://AlexGyAver.ru/
 
 // ************************ WIFI ЛАМПА *************************
 
 #define FIRMWARE_VER F("\n\nGyverLamp-WiFi v.1.01.2019.1104")
 #define FASTLED_INTERRUPT_RETRY_COUNT 0
 #define FASTLED_ALLOW_INTERRUPTS 0
+/////#define FASTLED_ESP8266_RAW_PIN_ORDER
 
 // Подключение используемых библиотек
-#include <ESP8266WiFi.h>
+#if defined(ESP8266)
+  #include <ESP8266WiFi.h>
+#endif
+
+#if defined(ESP32)
+  #include <WiFi.h>
+#ifndef min
+  #define min(a,b) (((a) < (b)) ? (a) : (b))
+#endif
+#ifndef max
+  #define max(a,b) (((a) > (b)) ? (a) : (b))
+#endif
+#endif
+
 #include <WiFiUdp.h>
 #include <TimeLib.h>
 #include <EEPROM.h>
@@ -21,14 +35,22 @@
 #include "DFRobotDFPlayerMini.h"     // Установите в менеджере библиотек стандартную библиотеку DFRobotDFPlayerMini ("DFPlayer - A Mini MP3 Player For Arduino" )
 #include "timerMinim.h"
 #include "GyverButton.h"
-#include "GyverTM1637.h"
 #include "fonts.h"
+
+#if defined(ESP8266)
+  #include "GyverTM1637.h"
+#endif
+
+#if defined(ESP32)
+  #include "TM1637Display.h"
+#endif
+
 
 #define BRIGHTNESS 32         // стандартная маскимальная яркость (0-255)
 uint16_t CURRENT_LIMIT=5000;  // лимит по току в миллиамперах, автоматически управляет яркостью (пожалей свой блок питания!) 0 - выключить лимит
 
-#define WIDTH 19              // ширина матрицы
-#define HEIGHT 9              // высота матрицы
+#define WIDTH 16              // ширина матрицы
+#define HEIGHT 16             // высота матрицы
 #define SEGMENTS 1            // диодов в одном "пикселе" (для создания матрицы из кусков ленты)
 #define DEVICE_TYPE 0         // Использование матрицы: 0 - свернута в трубу для лампы; 1 - плоская матрица в рамке   
 
@@ -53,7 +75,7 @@ uint16_t CURRENT_LIMIT=5000;  // лимит по току в миллиампе�
 #define AUTOPLAY_PERIOD 60    // время между авто сменой режимов (секунды)
 #define IDLE_TIME 30          // время бездействия (в минутах) после которого запускается автосмена режимов
 #define SMOOTH_CHANGE 0       // плавная смена режимов через чёрный
-#define USE_MP3 0             // поставьте 0, если у вас нет звуковой карты MP3 плеера
+#define USE_MP3 1             // поставьте 0, если у вас нет звуковой карты MP3 плеера
 
 // ****************** ПИНЫ ПОДКЛЮЧЕНИЯ *******************
 // Внимание!!! При использовании платы микроконтроллера Wemos D1 (xxxx) и выбранной в менеджере плат платы "Wemos D1 (xxxx)"
@@ -67,14 +89,30 @@ uint16_t CURRENT_LIMIT=5000;  // лимит по току в миллиампе�
 
 // пины подписаны согласно pinout платы, а не надписям на пинах!
 // esp8266 - плату выбирал "Node MCU v3 (SP-12E Module)"
+#if defined(ESP8266)
 #define SRX D4       // D3 is RX of ESP8266, connect to TX of DFPlayer
 #define STX D3       // D4 is TX of ESP8266, connect to RX of DFPlayer module
 #define PIN_BTN D6   // кнопка подключена сюда (PIN --- КНОПКА --- GND)
-#define DIO D5       // TM1637 display DIO pin   
-#define CLK D7       // TM1637 display CLK pin   
+#define DIO D5       // TM1637 display DIO pin
+#define CLK D7       // TM1637 display CLK pin
+#endif
+// esp32 - плату выбирал "ESP32 Dev Module"
+#if defined(ESP32)
+#define SRX (16U)       // D3 is RX of ESP8266, connect to TX of DFPlayer
+#define STX (17U)       // D4 is TX of ESP8266, connect to RX of DFPlayer module
+#define PIN_BTN (4U)   // кнопка подключена сюда (PIN --- КНОПКА --- GND)
+#define DIO (23U)       // TM1637 display DIO pin
+#define CLK (22U)       // TM1637 display CLK pin
+#endif
 
 // Используйте данное определение, если у вас МК NodeMCU, в менеджере плат выбрано NodeMCU v1.0 (ESP-12E), лента физически подключена к пину D2 на плате 
+#if defined(ESP8266)
 #define LED_PIN 2    // пин ленты
+#endif
+// Используйте данное определение, если у вас МК ESP32, в менеджере плат выбрано ESP32 Dev Module, лента физически подключена к пину D2 на плате
+#if defined(ESP32)
+#define LED_PIN (2U)  // пин ленты
+#endif
 // Используйте данное определение, если у вас МК Wemos D1, в менеджере плат выбрано NodeMCU v1.0 (ESP-12E), лента физически подключена к пину D4 на плате 
 //#define LED_PIN 4  // пин ленты
 
@@ -89,30 +127,31 @@ CRGB leds[NUM_LEDS];
 #define MC_SNOW                  1
 #define MC_BALL                  2
 #define MC_RAINBOW_HORIZ         3
-#define MC_FIRE                  4
-#define MC_MATRIX                5
-#define MC_BALLS                 6
-#define MC_STARFALL              7
-#define MC_SPARKLES              8
-#define MC_RAINBOW_DIAG          9
-#define MC_TEXT                 10
-#define MC_NOISE_MADNESS        11
-#define MC_NOISE_CLOUD          12
-#define MC_NOISE_LAVA           13
-#define MC_NOISE_PLASMA         14
-#define MC_NOISE_RAINBOW        15
-#define MC_NOISE_RAINBOW_STRIP  16
-#define MC_NOISE_ZEBRA          17
-#define MC_NOISE_FOREST         18
-#define MC_NOISE_OCEAN          19
-#define MC_COLORS               20
-#define MC_RAINBOW_VERT         21
-#define MC_LIGHTERS             22
-#define MC_CLOCK                23
-#define MC_DAWN_ALARM           24
+#define MC_PAINTBALL             4                         // Пейнтбол
+#define MC_FIRE                  5
+#define MC_MATRIX                6
+#define MC_BALLS                 7
+#define MC_STARFALL              8
+#define MC_SPARKLES              9
+#define MC_RAINBOW_DIAG         10
+#define MC_TEXT                 11
+#define MC_NOISE_MADNESS        12
+#define MC_NOISE_CLOUD          13
+#define MC_NOISE_LAVA           14
+#define MC_NOISE_PLASMA         15
+#define MC_NOISE_RAINBOW        16
+#define MC_NOISE_RAINBOW_STRIP  17
+#define MC_NOISE_ZEBRA          18
+#define MC_NOISE_FOREST         19
+#define MC_NOISE_OCEAN          20
+#define MC_COLORS               21
+#define MC_RAINBOW_VERT         22
+#define MC_LIGHTERS             23
+#define MC_CLOCK                24
+#define MC_DAWN_ALARM           25
 
-#define MAX_EFFECT              25         // количество эффектов, определенных в прошивке
-#define MAX_SPEC_EFFECT         10         // номер последнего эффекта быстрого доступа из определенных в прошивке -> 0..10
+#define MAX_EFFECT              26         // количество эффектов, определенных в прошивке
+#define MAX_SPEC_EFFECT         10         // количество эффектов быстрого доступа, определенных в прошивке
 
 // ---------------------------------
 #define MC_DAWN_ALARM_SPIRAL 253           // Специальный режим, вызывается из DEMO_DAWN_ALARM для ламп на круговой матрице - огонек по спирали
@@ -122,7 +161,7 @@ CRGB leds[NUM_LEDS];
 // Список и порядок эффектов и игр, передаваймый в приложение на смартфоне. Данные списки попадают в комбобокс выбора, 
 // чей индекс передается из приложения в контроллер матрицы для выбора, поэтому порядок должен соответствовать 
 // спискам эффектов и игр, определенному выше
-#define EFFECT_LIST F("Лампа,Снегопад,Шарик,Радуга вертикальная,Огонь,The Matrix,Шарики,Звездопад,Конфетти,Радуга диагональная,Часы с датой,Цветной шум,Облака,Лава,Плазма,Радужные переливы,Полосатые переливы,Зебра,Шумящий лес,Морской прибой,Смена цвета,Радуга горизонтальная,Светлячки,Часы,Рассвет")
+#define EFFECT_LIST F("Лампа,Снегопад,Шарик,Радуга вертикальная,Пейнтбол,Огонь,The Matrix,Шарики,Звездопад,Конфетти,Радуга диагональная,Часы с датой,Цветной шум,Облака,Лава,Плазма,Радужные переливы,Полосатые переливы,Зебра,Шумящий лес,Морской прибой,Смена цвета,Радуга горизонтальная,Светлячки,Часы,Рассвет")
 
 #if (SMOOTH_CHANGE == 1)
   byte fadeMode = 4;
@@ -264,6 +303,7 @@ timerMinim saveSettingsTimer(15000);     // Таймер отложенного 
 #define NETWORK_SSID ""                  // Имя WiFi сети
 #define NETWORK_PASS ""                  // Пароль для подключения к WiFi сети
 
+
 // ---------------------------------------------------------------
                                          // к длине +1 байт на \0 - терминальный символ. Это буферы для загрузки имен/пароля из EEPROM. Значения задаются в defiine выше
 char apName[11] = "";                    // Имя сети в режиме точки доступа
@@ -273,7 +313,7 @@ char pass[17] = "";                      // пароль роутера
 
 WiFiUDP udp;
 unsigned int localPort = 2390;           // local port to listen for UDP packets
-byte IP_STA[] = {192, 168, 0, 116};      // Статический адрес в локальной сети WiFi
+byte IP_STA[] = {10, 10, 100, 62};       // Статический адрес в локальной сети WiFi
 
 IPAddress timeServerIP;
 #define NTP_PACKET_SIZE 48               // NTP время в первых 48 байтах сообщения
@@ -301,8 +341,8 @@ byte soundFile = 0;
 int8_t fadeSoundDirection = 1;       // направление изменения громкости звука: 1 - увеличение; -1 - уменьшение
 byte fadeSoundStepCounter = 0;       // счетчик шагов изменения громкости, которое осталось сделать
 
-//GButton butt(PIN_BTN, LOW_PULL, NORM_OPEN); // Для сенсорной кнопки
-GButton butt(PIN_BTN, HIGH_PULL, NORM_OPEN);  // Для обычной кнопки
+GButton butt(PIN_BTN, LOW_PULL, NORM_OPEN); // Для сенсорной кнопки
+//GButton butt(PIN_BTN, HIGH_PULL, NORM_OPEN);  // Для обычной кнопки
 
 bool isButtonHold = false;           // Кнопка нажата и удерживается
 
@@ -315,12 +355,21 @@ byte AM2_hour = 0;                   // Режим 2 по времени - ча�
 byte AM2_minute = 0;                 // Режим 2 по времени - минуты
 int8_t AM2_effect_id = -3;           // Режим 2 по времени - ID эффекта или -3 - выключено (не используется); -2 - выключить матрицу (черный экран); -1 - огонь, 0 - случайный, 1 и далее - эффект EFFECT_LIST
 
-GyverTM1637 disp(CLK, DIO);
+#if defined(ESP8266)
+  GyverTM1637 disp(CLK, DIO);
+#endif
+
+#if defined(ESP32)
+  TM1637Display display(CLK, DIO);
+#endif
+/////  uint8_t data[] = { 0xff, 0xff, 0xff, 0xff };
+/////  uint8_t blank[] = { 0x00, 0x00, 0x00, 0x00 };
+/////  uint8_t dash[] = { 0x40, 0x40, 0x40, 0x40 };
 
 void setup() {
-
+#if defined(ESP8266)
   ESP.wdtEnable(WDTO_8S);
-  
+#endif
   Serial.begin(115200);
   delay(10);
   
@@ -336,7 +385,9 @@ void setup() {
     InitializeDfPlayer1();
   #endif
      
+#if defined(ESP8266)
   WiFi.setSleepMode(WIFI_NONE_SLEEP);
+#endif
 
   connectToNetwork();
 
@@ -346,8 +397,15 @@ void setup() {
   butt.setStepTimeout(100);
   butt.setClickTimeout(500);
 
+#if defined(ESP8266)
   disp.brightness(7);  // яркость, 0 - 7 (минимум - максимум)
   disp.displayByte(_empty, _empty, _empty, _empty);
+#endif
+
+#if defined(ESP32)
+  display.setBrightness(0x0f);
+  display.displayByte(_empty, _empty, _empty, _empty);
+#endif
   
   // Таймер бездействия
   if (idleTime == 0) // Таймер Idle  отключен
@@ -405,7 +463,9 @@ void setup() {
 
 void loop() {
   process();
+#if defined(ESP8266)
   ESP.wdtFeed();
+#endif
 }
 
 // -----------------------------------------
@@ -438,7 +498,9 @@ void startWiFi() {
         Serial.println(WiFi.localIP());
         break;
       }
+#if defined(ESP8266)
       ESP.wdtFeed();
+#endif
       delay(1000);
       Serial.print(".");
     }
@@ -477,7 +539,9 @@ void startSoftAP() {
     
     WiFi.enableAP(false);
     WiFi.softAPdisconnect(true);
+#if defined(ESP8266)
     ESP.wdtFeed();
+#endif
     delay(1000);
     
     Serial.print(".");

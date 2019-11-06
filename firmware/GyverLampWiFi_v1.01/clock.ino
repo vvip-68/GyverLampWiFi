@@ -69,8 +69,14 @@ void parseNTP() {
 void getNTP() {
   if (!wifi_connected) return;
   WiFi.hostByName(ntpServerName, timeServerIP);
+  IPAddress ip;
+  ip.fromString(F("0.0.0.0"));
+#if defined(ESP8266)
   if (!timeServerIP.isSet()) timeServerIP.fromString(F("192.36.143.130"));  // Один из ru.pool.ntp.org // 195.3.254.2
-  printNtpServerName();
+#endif
+#if defined(ESP32)
+  if (timeServerIP==ip) timeServerIP.fromString(F("192.36.143.130"));  // Один из ru.pool.ntp.org // 195.3.254.2
+#endif
   sendNTPpacket(timeServerIP); // send an NTP packet to a time server
   // wait to see if a reply is available
   ntp_t = millis();  
@@ -252,6 +258,7 @@ void clockRoutine() {
   FastLED.clear();  
 }
 
+#if defined(ESP8266)
 void clockTicker() {  
 
   hrs = hour();
@@ -325,6 +332,83 @@ void clockTicker() {
     }
   }
 }
+#endif
+
+#if defined(ESP32)
+void clockTicker() {  
+
+  hrs = hour();
+  mins = minute();
+
+  if (isTurnedOff && needTurnOffClock && init_time) {
+    display.displayByte(_empty, _empty, _empty, _empty);
+    display.point(false);
+    return;
+  }
+
+  if (halfsecTimer.isReady()) {    
+    clockHue += HUE_STEP;
+    setOverlayColors();
+    dotFlag = !dotFlag;
+  }
+  
+  if (isButtonHold || bCounter > 0) {
+    // Удержание кнопки - изменение яркости + 2 сек после того как кнопка отпущена - 
+    // отображать показание текущего значения яркости в процентах 0..99
+    if (isButtonHold) bCounter = 4;
+    if (!isButtonHold && bCounter > 0 && halfsecTimer.isReady()) bCounter--;
+    byte prcBrightness = map(globalBrightness,0,255,0,99);
+    byte m10 = getByteForDigit(prcBrightness / 10);
+    byte m01 = getByteForDigit(prcBrightness % 10);
+    display.displayByte(0b01111100, 0b01010000, m10, m01);
+    display.point(false);
+  } else if (wifi_print_ip) {
+    // Четырехкратное нажатие кнопки запускает отображение по частям текущего IP лампы  
+    if (dotFlag) {
+      int value = atoi(GetToken(WiFi.localIP().toString(), wifi_print_idx + 1, '.').c_str()); 
+      display.displayInt(value);
+      display.point(false);
+      wifi_print_idx++;
+      if (wifi_print_idx>3) {
+        wifi_print_idx = 0; 
+        wifi_print_ip = false;
+      }
+    }
+  } else {
+    // Отображение часов - разделительное двоеточие...
+    bool halfSec = halfsecTimer.isReady();
+    if (halfSec) {
+      dotFlag = !dotFlag;
+      display.point(dotFlag);
+    }
+    // Если время еще не получено - отображать прочерки
+    if (!init_time) {
+      if (halfSec) display.displayByte(_dash, _dash, _dash, _dash);
+    } else if (!isAlarmStopped && (isPlayAlarmSound || isAlarming)) {
+      // Сработал будильник (звук) - плавное мерцание текущего времени      
+      if (halfSec) display.displayClock(hour(),minute());
+      if (millis() - fade_time > 50) {
+        fade_time = millis();
+        display.setBrightness(aCounter);
+        if (aDirection) aCounter++; else aCounter--;
+        if (aCounter > 7) {
+          aDirection = false;
+          aCounter = 7;
+        }
+        if (aCounter == 0) {
+          aDirection = true;
+        }
+      }
+    } else {
+      // Время получено - отображать часы:минуты
+      if (halfSec) {
+        display.displayClock(hour(),minute());
+        display.setBrightness(isTurnedOff ? 1 : 7);
+      }
+    }
+  }
+}
+#endif
 
 void clockOverlayWrapH(int8_t posX, int8_t posY) {
   byte thisLED = 0;
@@ -591,7 +675,12 @@ void checkAlarmTime() {
 
     // Во время работы будильника индикатор плавно мерцает.
     // После завершения работы - восстановить яркость индикатора
+#if defined(ESP8266)
     disp.brightness (7);
+#endif
+#if defined(ESP32)
+    display.setBrightness(7);
+#endif
 
     Serial.println(String(F("Будильник Авто-ВЫКЛ в "))+String(h)+ ":" + String(m));
     
@@ -654,7 +743,12 @@ void stopAlarm() {
 
     // Во время работы будильника индикатор плавно мерцает.
     // После завершения работы - восстановить яркость индикатора
+#if defined(ESP8266)
     disp.brightness (7);
+#endif
+#if defined(ESP32)
+    display.setBrightness(7);
+#endif
     StopSound(1000);
 
     resetModes();  
@@ -735,7 +829,7 @@ void SetAutoMode(byte amode) {
   int8_t ef = (amode == 1 ? AM1_effect_id : AM2_effect_id);
 
   //ef: -2 - нет действия; 
-  //    -1 - выключить лампу (черный экран); 
+  //    -1 - выключить лампы (черный экран); 
   //     0 - случайный,
   //     1 и далее - эффект из EFFECT_LIST по списку
 

@@ -60,36 +60,54 @@ void lightBallsRoutine() {
   // an automatic trend toward black -- by design.
   uint8_t blurAmount = dim8_raw(beatsin8(3,64,100));
   blur2d(leds, WIDTH, HEIGHT, blurAmount);
-
-  // Use two out-of-sync sine waves
-  uint8_t  i = beatsin8(  91, BorderWidth, WIDTH-BorderWidth);
-  uint8_t  j = beatsin8( 109, BorderWidth, WIDTH-BorderWidth);
-  uint8_t  k = beatsin8(  73, BorderWidth, WIDTH-BorderWidth);
-  uint8_t  m = beatsin8( 123, BorderWidth, WIDTH-BorderWidth);
+ 
+  // Use two out-of-sync sine waves  
+  uint8_t  i = beatsin8(  91, BorderWidth, maxDim-BorderWidth);
+  uint8_t  j = beatsin8( 109, BorderWidth, maxDim-BorderWidth);
+  uint8_t  k = beatsin8(  73, BorderWidth, maxDim-BorderWidth);
+  uint8_t  m = beatsin8( 123, BorderWidth, maxDim-BorderWidth);
 
   // The color of each point shifts over time, each at a different speed.
   uint32_t ms = millis();
-  leds[XY( i, j)] += CHSV( ms / 29, 200U, 255U);
-  leds[XY( j, k)] += CHSV( ms / 41, 200U, 255U);
-  leds[XY( k, m)] += CHSV( ms / 73, 200U, 255U);
-  leds[XY( m, i)] += CHSV( ms / 97, 200U, 255U);
+  int16_t idx, wh = WIDTH * HEIGHT;
+  idx = XY( i, j); if (idx < wh) leds[idx] += CHSV( ms / 29, 200U, 255U);
+  idx = XY( j, k); if (idx < wh) leds[idx] += CHSV( ms / 41, 200U, 255U);
+  idx = XY( k, m); if (idx < wh) leds[idx] += CHSV( ms / 73, 200U, 255U);
+  idx = XY( m, i); if (idx < wh) leds[idx] += CHSV( ms / 97, 200U, 255U);
 }
+
 // Trivial XY function for the SmartMatrix; use a different XY
 // function for different matrix grids. See XYMatrix example for code.
 uint16_t XY(uint8_t x, uint8_t y)
 {
   uint16_t i;
-  if (y & 0x01)
-  {
-    // Odd rows run backwards
-    uint8_t reverseX = (WIDTH - 1) - x;
-    i = (y * WIDTH) + reverseX;
+  uint8_t reverse;
+  if (WIDTH > HEIGHT) {
+    if (y & 0x01)
+    {
+      // Odd rows run backwards
+      reverse = (WIDTH - 1) - x;
+      i = (y * WIDTH) + reverse;
+    }
+    else
+    {
+      // Even rows run forwards
+      i = (y * WIDTH) + x;
+    }
+  } else {
+    if (x & 0x01)
+    {
+      // Odd rows run backwards
+      reverse = (HEIGHT - 1) - y;
+      i = (x * HEIGHT) + reverse;
+    }
+    else
+    {
+      // Even rows run forwards
+      i = (x * HEIGHT) + y;
+    }
   }
-  else
-  {
-    // Even rows run forwards
-    i = (y * WIDTH) + x;
-  }
+
   return i;
 }
 

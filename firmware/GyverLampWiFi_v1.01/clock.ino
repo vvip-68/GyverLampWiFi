@@ -464,7 +464,8 @@ boolean needUnwrap() {
       modeCode == MC_MATRIX ||
       modeCode == MC_STARFALL ||
       modeCode == MC_BALLS ||
-      modeCode == MC_FIRE) return true;
+      modeCode == MC_FIRE ||
+      modeCode == MC_PAINTBALL) return true;
   else return false;
 }
 

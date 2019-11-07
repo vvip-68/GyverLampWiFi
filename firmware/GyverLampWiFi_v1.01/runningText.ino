@@ -115,12 +115,3 @@ uint8_t getFont(uint8_t font, uint8_t row) {
     return pgm_read_byte(&(fontHEX[font + 47][row]));
   }
 }
-
-/*
-  // интерпретатор кода символа по ASCII в его номер в массиве fontHEX (для Arduino IDE до 1.6.*)
-  uint8_t getFontOld(uint8_t font, uint8_t row) {
-  font = font - '0' + 16;   // перевод код символа из таблицы ASCII в номер согласно нумерации массива
-  if (font < 126) return pgm_read_byte(&(fontHEX[font][row]));   // для английских букв и символов
-  else return pgm_read_byte(&(fontHEX[font - 65][row]));         // для русских букв и символов (смещение -65 по массиву)
-  }
-*/

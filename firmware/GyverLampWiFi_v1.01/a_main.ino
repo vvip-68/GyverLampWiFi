@@ -1065,7 +1065,8 @@ void sendPageParams(int page) {
           str+="|UE:1";
       else    
           str+="|UE:0";
-      str+="|SS:"+(thisMode == MC_DAWN_ALARM || thisMode == MC_RAINBOW_DIAG || thisMode == MC_BALLS || thisMode == MC_STARFALL || thisMode == MC_COLORS
+      // Эффекты не имеющие настройки вариации отправляют значение "Х" - программа делает ползунок настройки недоступным
+      str+="|SS:"+(thisMode == MC_DAWN_ALARM || thisMode == MC_RAINBOW_DIAG || thisMode == MC_BALLS || thisMode == MC_STARFALL || thisMode == MC_COLORS || thisMode == MC_PAINTBALL
          ? "X" 
          : String(effectScaleParam[thisMode]));
       str+=";";
@@ -1220,8 +1221,8 @@ void setSpecialMode(int spc_mode) {
     case 3:  // Огонь;
       tmp_eff = MC_FIRE;
       break;
-    case 4:  // Светлячки;
-      tmp_eff = MC_SPARKLES;
+    case 4:  // Пейнтбол;
+      tmp_eff = MC_PAINTBALL;
       break;
     case 5:  // Радуга;
       tmp_eff = MC_RAINBOW_DIAG;

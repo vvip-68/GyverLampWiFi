@@ -252,15 +252,15 @@ private:
 #define _empty 0x00
 #define _degree 0x63
 
-#define _0 0x3f
-#define _1 0x06
-#define _2 0x5b
-#define _3 0x4f
-#define _4 0x66
-#define _5 0x6d
-#define _6 0x7d
-#define _7 0x07
-#define _8 0x7f
-#define _9 0x6f
+#define _digit_0 0x3f
+#define _digit_1 0x06
+#define _digit_2 0x5b
+#define _digit_3 0x4f
+#define _digit_4 0x66
+#define _digit_5 0x6d
+#define _digit_6 0x7d
+#define _digit_7 0x07
+#define _digit_8 0x7f
+#define _digit_9 0x6f
 
 #endif // __TM1637DISPLAY__

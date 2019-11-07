@@ -14,7 +14,6 @@
 #define FIRMWARE_VER F("\n\nGyverLamp-WiFi v.1.01.2019.1107")
 #define FASTLED_INTERRUPT_RETRY_COUNT 0
 #define FASTLED_ALLOW_INTERRUPTS 0
-/////#define FASTLED_ESP8266_RAW_PIN_ORDER
 
 // Подключение используемых библиотек
 #if defined(ESP8266)
@@ -41,13 +40,16 @@
 #include "GyverButton.h"
 #include "fonts.h"
 
+/*
 #if defined(ESP8266)
-  #include "GyverTM1637.h"
+  #include "TM1637Display.h"
 #endif
 
 #if defined(ESP32)
   #include "TM1637Display.h"
 #endif
+*/
+#include "TM1637Display.h"
 
 
 #define BRIGHTNESS 32         // стандартная маскимальная яркость (0-255)
@@ -105,23 +107,20 @@ uint16_t CURRENT_LIMIT=5000;  // лимит по току в миллиампе�
 #if defined(ESP32)
 #define SRX (16U)       // D3 is RX of ESP8266, connect to TX of DFPlayer
 #define STX (17U)       // D4 is TX of ESP8266, connect to RX of DFPlayer module
-#define PIN_BTN (4U)   // кнопка подключена сюда (PIN --- КНОПКА --- GND)
+#define PIN_BTN (4U)    // кнопка подключена сюда (PIN --- КНОПКА --- GND)
 #define DIO (23U)       // TM1637 display DIO pin
 #define CLK (22U)       // TM1637 display CLK pin
 #endif
 
 // Используйте данное определение, если у вас МК NodeMCU, в менеджере плат выбрано NodeMCU v1.0 (ESP-12E), лента физически подключена к пину D2 на плате 
 #if defined(ESP8266)
-#define LED_PIN 2    // пин ленты
+#define LED_PIN D2    // пин ленты
 #endif
 
 // Используйте данное определение, если у вас МК ESP32, в менеджере плат выбрано ESP32 Dev Module, лента физически подключена к пину D2 на плате
 #if defined(ESP32)
 #define LED_PIN (2U)  // пин ленты
 #endif
-
-// Используйте данное определение, если у вас МК Wemos D1, в менеджере плат выбрано NodeMCU v1.0 (ESP-12E), лента физически подключена к пину D4 на плате 
-//#define LED_PIN 4  // пин ленты
 
 // ******************************** ДЛЯ РАЗРАБОТЧИКОВ ********************************
 #define DEBUG 0
@@ -134,7 +133,7 @@ CRGB leds[NUM_LEDS];
 #define MC_SNOW                  1
 #define MC_BALL                  2
 #define MC_RAINBOW_HORIZ         3
-#define MC_PAINTBALL             4                         // Пейнтбол
+#define MC_PAINTBALL             4
 #define MC_FIRE                  5
 #define MC_MATRIX                6
 #define MC_BALLS                 7
@@ -367,16 +366,7 @@ byte AM2_hour = 0;                   // Режим 2 по времени - ча�
 byte AM2_minute = 0;                 // Режим 2 по времени - минуты
 int8_t AM2_effect_id = -3;           // Режим 2 по времени - ID эффекта или -3 - выключено (не используется); -2 - выключить матрицу (черный экран); -1 - огонь, 0 - случайный, 1 и далее - эффект EFFECT_LIST
 
-#if defined(ESP8266)
-  GyverTM1637 disp(CLK, DIO);
-#endif
-
-#if defined(ESP32)
-  TM1637Display display(CLK, DIO);
-#endif
-/////  uint8_t data[] = { 0xff, 0xff, 0xff, 0xff };
-/////  uint8_t blank[] = { 0x00, 0x00, 0x00, 0x00 };
-/////  uint8_t dash[] = { 0x40, 0x40, 0x40, 0x40 };
+TM1637Display display(CLK, DIO);
 
 void setup() {
 #if defined(ESP8266)
@@ -397,9 +387,9 @@ void setup() {
     InitializeDfPlayer1();
   #endif
      
-#if defined(ESP8266)
-  WiFi.setSleepMode(WIFI_NONE_SLEEP);
-#endif
+  #if defined(ESP8266)
+    WiFi.setSleepMode(WIFI_NONE_SLEEP);
+  #endif
 
   connectToNetwork();
 
@@ -409,15 +399,8 @@ void setup() {
   butt.setStepTimeout(100);
   butt.setClickTimeout(500);
 
-#if defined(ESP8266)
-  disp.brightness(7);  // яркость, 0 - 7 (минимум - максимум)
-  disp.displayByte(_empty, _empty, _empty, _empty);
-#endif
-
-#if defined(ESP32)
-  display.setBrightness(0x0f);
+  display.setBrightness(7);
   display.displayByte(_empty, _empty, _empty, _empty);
-#endif
   
   // Таймер бездействия
   if (idleTime == 0) // Таймер Idle  отключен
@@ -444,6 +427,7 @@ void setup() {
 
   // Проверить соответствие позиции вывода часов и календаря размерам матрицы
   checkClockOrigin();
+  
   // Если был задан спец.режим во время предыдущего сеанса работы матрицы - включить его
   // Номер спец-режима запоминается при его включении и сбрасывается при включении обычного режима или игры
   // Это позволяет в случае внезапной перезагрузки матрицы (например по wdt), когда был включен спец-режим (например ночные часы или выкл. лампы)
@@ -497,7 +481,7 @@ void startWiFi() {
     }              
     WiFi.begin(ssid, pass);
   
-    // Проверка соединения (таймаут 10 секунд)
+    // Проверка соединения (таймаут 5 секунд)
     for (int j = 0; j < 10; j++ ) {
       wifi_connected = WiFi.status() == WL_CONNECTED; 
       if (wifi_connected) {
@@ -507,10 +491,7 @@ void startWiFi() {
         Serial.println(WiFi.localIP());
         break;
       }
-#if defined(ESP8266)
-      ESP.wdtFeed();
-#endif
-      delay(1000);
+      delay(500);
       Serial.print(".");
     }
     Serial.println();
@@ -548,10 +529,7 @@ void startSoftAP() {
     
     WiFi.enableAP(false);
     WiFi.softAPdisconnect(true);
-#if defined(ESP8266)
-    ESP.wdtFeed();
-#endif
-    delay(1000);
+    delay(500);
     
     Serial.print(".");
     ap_connected = WiFi.softAP(apName, apPass);

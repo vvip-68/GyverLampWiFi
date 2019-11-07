@@ -259,82 +259,6 @@ void clockRoutine() {
   FastLED.clear();  
 }
 
-#if defined(ESP8266)
-void clockTicker() {  
-
-  hrs = hour();
-  mins = minute();
-
-  if (isTurnedOff && needTurnOffClock && init_time) {
-    disp.displayByte(_empty, _empty, _empty, _empty);
-    disp.point(false);
-    return;
-  }
-
-  bool halfSec = halfsecTimer.isReady();
-  if (halfSec) {    
-    clockHue += HUE_STEP;
-    setOverlayColors();
-    dotFlag = !dotFlag;
-  }
-  
-  if (isButtonHold || bCounter > 0) {
-    // Удержание кнопки - изменение яркости + 2 сек после того как кнопка отпущена - 
-    // отображать показание текущего значения яркости в процентах 0..99
-    if (isButtonHold) bCounter = 4;
-    if (!isButtonHold && bCounter > 0 && halfSec) bCounter--;
-    byte prcBrightness = map(globalBrightness,0,255,0,99);
-    byte m10 = getByteForDigit(prcBrightness / 10);
-    byte m01 = getByteForDigit(prcBrightness % 10);
-    disp.displayByte(_b, _r, m10, m01);
-    disp.point(false);
-  } else if (wifi_print_ip) {
-    // Четырехкратное нажатие кнопки запускает отображение по частям текущего IP лампы  
-    if (dotFlag) {
-      int value = atoi(GetToken(WiFi.localIP().toString(), wifi_print_idx + 1, '.').c_str()); 
-      disp.displayInt(value);
-      disp.point(false);
-      wifi_print_idx++;
-      if (wifi_print_idx>3) {
-        wifi_print_idx = 0; 
-        wifi_print_ip = false;
-      }
-    }
-  } else {
-    // Отображение часов - разделительное двоеточие...
-    if (halfSec) {
-      disp.point(dotFlag);
-    }
-    // Если время еще не получено - отображать прочерки
-    if (!init_time) {
-      if (halfSec) disp.displayByte(_dash, _dash, _dash, _dash);
-    } else if (!isAlarmStopped && (isPlayAlarmSound || isAlarming)) {
-      // Сработал будильник (звук) - плавное мерцание текущего времени      
-      if (halfSec) disp.displayClock(hour(),minute());
-      if (millis() - fade_time > 50) {
-        fade_time = millis();
-        disp.brightness(aCounter);
-        if (aDirection) aCounter++; else aCounter--;
-        if (aCounter > 7) {
-          aDirection = false;
-          aCounter = 7;
-        }
-        if (aCounter == 0) {
-          aDirection = true;
-        }
-      }
-    } else {
-      // Время получено - отображать часы:минуты
-      if (halfSec) {
-        disp.displayClock(hour(),minute());
-        disp.brightness(isTurnedOff ? 1 : 7);
-      }
-    }
-  }
-}
-#endif
-
-#if defined(ESP32)
 void clockTicker() {  
 
   hrs = hour();
@@ -407,7 +331,6 @@ void clockTicker() {
     }
   }
 }
-#endif
 
 void clockOverlayWrapH(int8_t posX, int8_t posY) {
   byte thisLED = 0;
@@ -675,13 +598,7 @@ void checkAlarmTime() {
 
     // Во время работы будильника индикатор плавно мерцает.
     // После завершения работы - восстановить яркость индикатора
-#if defined(ESP8266)
-    disp.brightness (7);
-#endif
-#if defined(ESP32)
     display.setBrightness(7);
-#endif
-
     Serial.println(String(F("Будильник Авто-ВЫКЛ в "))+String(h)+ ":" + String(m));
     
     alarmSoundTimer.setInterval(4294967295);
@@ -743,12 +660,8 @@ void stopAlarm() {
 
     // Во время работы будильника индикатор плавно мерцает.
     // После завершения работы - восстановить яркость индикатора
-#if defined(ESP8266)
-    disp.brightness (7);
-#endif
-#if defined(ESP32)
+    
     display.setBrightness(7);
-#endif
     StopSound(1000);
 
     resetModes();  
@@ -762,8 +675,6 @@ void stopAlarm() {
        setEffect(saveMode);
     }
     
-    // setRandomMode();
-
     delay(0);    
     sendPageParams(95);  // Параметры, статуса IsAlarming (AL:1), чтобы изменить в смартфоне отображение активности будильника
   }
@@ -879,16 +790,16 @@ void SetAutoMode(byte amode) {
 
 byte getByteForDigit(byte digit) {
   switch (digit) {
-    case 0: return _0;
-    case 1: return _1;
-    case 2: return _2;
-    case 3: return _3;
-    case 4: return _4;
-    case 5: return _5;
-    case 6: return _6;
-    case 7: return _7;
-    case 8: return _8;
-    case 9: return _9;
+    case 0: return _digit_0;
+    case 1: return _digit_1;
+    case 2: return _digit_2;
+    case 3: return _digit_3;
+    case 4: return _digit_4;
+    case 5: return _digit_5;
+    case 6: return _digit_6;
+    case 7: return _digit_7;
+    case 8: return _digit_8;
+    case 9: return _digit_9;
     default: return _empty;
   }
 }

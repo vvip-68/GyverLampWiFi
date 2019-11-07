@@ -35,22 +35,11 @@
 #include <EEPROM.h>
 #include <SoftwareSerial.h>          // Установите в менеджере библиотек "EspSoftwareSerial" для ESP8266/ESP32 https://github.com/plerup/espsoftwareserial/
 #include "FastLED.h"                 // Установите в менеджере библиотек стандартную библиотеку FastLED
+#include "TM1637Display.h"
 #include "DFRobotDFPlayerMini.h"     // Установите в менеджере библиотек стандартную библиотеку DFRobotDFPlayerMini ("DFPlayer - A Mini MP3 Player For Arduino" )
 #include "timerMinim.h"
 #include "GyverButton.h"
 #include "fonts.h"
-
-/*
-#if defined(ESP8266)
-  #include "TM1637Display.h"
-#endif
-
-#if defined(ESP32)
-  #include "TM1637Display.h"
-#endif
-*/
-#include "TM1637Display.h"
-
 
 #define BRIGHTNESS 32         // стандартная маскимальная яркость (0-255)
 uint16_t CURRENT_LIMIT=5000;  // лимит по току в миллиамперах, автоматически управляет яркостью (пожалей свой блок питания!) 0 - выключить лимит

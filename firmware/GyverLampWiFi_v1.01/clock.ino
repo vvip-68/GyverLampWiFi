@@ -285,7 +285,7 @@ void clockTicker() {
     byte prcBrightness = map(globalBrightness,0,255,0,99);
     byte m10 = getByteForDigit(prcBrightness / 10);
     byte m01 = getByteForDigit(prcBrightness % 10);
-    display.displayByte(0b01111100, 0b01010000, m10, m01);
+    display.displayByte(_b_, _r_, m10, m01);
     display.point(false);
   } else if (wifi_print_ip) {
     // Четырехкратное нажатие кнопки запускает отображение по частям текущего IP лампы  
@@ -790,16 +790,16 @@ void SetAutoMode(byte amode) {
 
 byte getByteForDigit(byte digit) {
   switch (digit) {
-    case 0: return _digit_0;
-    case 1: return _digit_1;
-    case 2: return _digit_2;
-    case 3: return _digit_3;
-    case 4: return _digit_4;
-    case 5: return _digit_5;
-    case 6: return _digit_6;
-    case 7: return _digit_7;
-    case 8: return _digit_8;
-    case 9: return _digit_9;
+    case 0: return _0_;
+    case 1: return _1_;
+    case 2: return _2_;
+    case 3: return _3_;
+    case 4: return _4_;
+    case 5: return _5_;
+    case 6: return _6_;
+    case 7: return _7_;
+    case 8: return _8_;
+    case 9: return _9_;
     default: return _empty;
   }
 }

@@ -9,7 +9,6 @@ int16_t intData[PARSE_AMOUNT];  // массив численных значен�
 uint32_t prevColor;
 boolean recievedFlag;
 boolean parseStarted;
-byte lastMode = 0;
 char incomeBuffer[UDP_PACKET_MAX_SIZE];           // Буфер для приема строки команды из wifi udp сокета
 char replyBuffer[7];                              // ответ клиенту - подтверждения получения команды: "ack;/r/n/0"
 
@@ -349,9 +348,10 @@ void parsing() {
            MM - минуты срабатывания
            NN - эффект: -2 - выключено; -1 - выключить матрицу; 0 - случайный режим и далее по кругу; 1 и далее - список режимов ALARM_LIST 
     23 - прочие настройки
-       - $23 0 VAL  - лимито по потребляемому току
+       - $23 0 VAL  - лимит по потребляемому току
   */  
-  if (recievedFlag) {      // если получены данные
+  // Если прием данных завершен и управляющая команда в intData[0] распознана
+  if (recievedFlag && intData[0] > 0 && intData[0] <= 23) {
     recievedFlag = false;
 
     // Режимы 16,17,18  не сбрасывают idleTimer
@@ -361,7 +361,8 @@ void parsing() {
     }
 
     // Режимы кроме 4 (яркость), 14 (новый спец-режим) и 18 (запрос параметров страницы),
-    // 19 (настройки часов), 20 (настройки будильника), 21 (настройки сети) сбрасывают спец-режим
+    // 19 (настройки часов), 20 (настройки будильника), 21 (настройки сети) 
+    // 23 (доп.параметры) - сбрасывают спец-режим
     if (intData[0] != 4 && intData[0] != 14 && intData[0] != 18 && intData[0] != 19 &&
         intData[0] != 20 && intData[0] != 21 && intData[0] != 23) {
       if (specialMode) {
@@ -857,7 +858,6 @@ void parsing() {
         }
         break;
     }
-    lastMode = intData[0];  // запомнить предыдущий режим
   }
 
   // ****************** ПАРСИНГ *****************
@@ -1149,13 +1149,7 @@ void sendPageParams(int page) {
     // Отправить клиенту запрошенные параметры страницы / режимов
     str.toCharArray(incomeBuffer, str.length()+1);    
     udp.beginPacket(udp.remoteIP(), udp.remotePort());
-#if defined(ESP8266)
-    udp.write(incomeBuffer, str.length()+1);
-#endif
-
-#if defined(ESP32)
     udp.write((const uint8_t*) incomeBuffer, str.length()+1);
-#endif
     udp.endPacket();
     delay(0);
     Serial.println(String(F("Ответ на ")) + udp.remoteIP().toString() + ":" + String(udp.remotePort()) + " >> " + String(incomeBuffer));
@@ -1173,13 +1167,7 @@ void sendAcknowledge() {
   reply += "ack" + String(ackCounter++) + ";";  
   reply.toCharArray(replyBuffer, reply.length()+1);
   udp.beginPacket(udp.remoteIP(), udp.remotePort());
-#if defined(ESP8266)
-  udp.write(replyBuffer, reply.length()+1);
-#endif
-
-#if defined(ESP32)
   udp.write((const uint8_t*) replyBuffer, reply.length()+1);
-#endif
   udp.endPacket();
   delay(0);
   if (isCmd) {

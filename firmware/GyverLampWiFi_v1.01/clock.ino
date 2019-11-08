@@ -45,7 +45,7 @@ unsigned long sendNTPpacket(IPAddress& address) {
   // all NTP fields have been given values, now
   // you can send a packet requesting a timestamp:
   udp.beginPacket(address, 123); //NTP requests are to port 123
-  udp.write(packetBuffer, NTP_PACKET_SIZE);
+  udp.write((const uint8_t*) packetBuffer, NTP_PACKET_SIZE);  
   udp.endPacket();
 }
 

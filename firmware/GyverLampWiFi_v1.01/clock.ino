@@ -289,7 +289,7 @@ void clockTicker() {
     display.point(false);
   } else if (wifi_print_ip) {
     // Четырехкратное нажатие кнопки запускает отображение по частям текущего IP лампы  
-    if (dotFlag) {
+    if (dotFlag  && halfSec) {
       int value = atoi(GetToken(WiFi.localIP().toString(), wifi_print_idx + 1, '.').c_str()); 
       display.displayInt(value);
       display.point(false);

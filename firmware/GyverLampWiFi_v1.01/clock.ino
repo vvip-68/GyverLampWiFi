@@ -426,6 +426,7 @@ void setOverlayColors() {
       case MC_RAINBOW_VERT:
       case MC_RAINBOW_DIAG: 
       case MC_LIGHTERS:
+      case MC_PAINTBALL:
       case MC_NOISE_PLASMA:
         contrastClock();
         break;

@@ -82,7 +82,7 @@ uint16_t XY(uint8_t x, uint8_t y)
 {
   uint16_t i;
   uint8_t reverse;
-  if (WIDTH > HEIGHT) {
+  if (WIDTH >= HEIGHT) {
     if (y & 0x01)
     {
       // Odd rows run backwards

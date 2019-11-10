@@ -46,7 +46,7 @@ void snowRoutine() {
   }
 }
 
-// ------------- пейнтбол -------------
+// ------------- ПЕЙНТБОЛ -------------
 const uint8_t BorderWidth = 1U;
 void lightBallsRoutine() {
   if (loadingFlag) {
@@ -54,6 +54,7 @@ void lightBallsRoutine() {
     modeCode = MC_PAINTBALL;
     FastLED.clear();  // очистить
   }
+  
   // Apply some blurring to whatever's already on the matrix
   // Note that we never actually clear the matrix, we just constantly
   // blur it repeatedly.  Since the blurring is 'lossy', there's
@@ -70,10 +71,13 @@ void lightBallsRoutine() {
   // The color of each point shifts over time, each at a different speed.
   uint32_t ms = millis();
   int16_t idx, wh = WIDTH * HEIGHT;
-  idx = XY( i, j); if (idx < wh) leds[idx] += CHSV( ms / 29, 200U, 255U);
-  idx = XY( j, k); if (idx < wh) leds[idx] += CHSV( ms / 41, 200U, 255U);
-  idx = XY( k, m); if (idx < wh) leds[idx] += CHSV( ms / 73, 200U, 255U);
-  idx = XY( m, i); if (idx < wh) leds[idx] += CHSV( ms / 97, 200U, 255U);
+
+  byte cnt = map(255-effectScaleParam[MC_PAINTBALL],0,255,1, 5);
+  
+  if (cnt <= 1) { idx = XY(i, j); if (idx < wh) leds[idx] += CHSV( ms / 29, 200U, 255U); }
+  if (cnt <= 2) { idx = XY(j, k); if (idx < wh) leds[idx] += CHSV( ms / 41, 200U, 255U); }
+  if (cnt <= 3) { idx = XY(k, m); if (idx < wh) leds[idx] += CHSV( ms / 73, 200U, 255U); }
+  if (cnt <= 4) { idx = XY(m, i); if (idx < wh) leds[idx] += CHSV( ms / 97, 200U, 255U); }
 }
 
 // Trivial XY function for the SmartMatrix; use a different XY
@@ -110,7 +114,6 @@ uint16_t XY(uint8_t x, uint8_t y)
 
   return i;
 }
-
 // ***************************** БЛУДНЫЙ КУБИК *****************************
 int coordB[2];
 int8_t vectorB[2];

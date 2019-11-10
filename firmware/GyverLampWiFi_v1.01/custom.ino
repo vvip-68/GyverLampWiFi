@@ -206,9 +206,12 @@ void prevModeHandler() {
 
 void setTimersForMode(byte aMode) {
   effectSpeed = getEffectSpeed(aMode);
-  effectTimer.setInterval(effectSpeed);
+  if (aMode == MC_PAINTBALL)
+    effectTimer.setInterval(10);   // Режим Пейнтбол смотрится (работает) только на максимальной скорости
+  else
+    effectTimer.setInterval(effectSpeed);
   byte clockSpeed = getEffectSpeed(MC_CLOCK);
-  if (clockSpeed >= 250) {
+  if (clockSpeed >= 240) {
     clockTimer.setInterval(4294967295);
     checkClockOrigin();
   } else {

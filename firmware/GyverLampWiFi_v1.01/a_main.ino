@@ -520,6 +520,7 @@ void parsing() {
         break;
       case 15: 
         if (intData[2] == 0) {
+          if (intData[1] == 255) intData[1] = 254;
           effectSpeed = 255 - intData[1]; 
           saveEffectSpeed(thisMode, effectSpeed);
           if (thisMode == MC_FILL_COLOR) { 
@@ -622,13 +623,6 @@ void parsing() {
              // Если высота матрицы меньше минимальной для режима вертикальных часов (11 точек) положение "Вертикально не может быть задано
              if (CLOCK_ORIENT == 1 && HEIGHT < 11) CLOCK_ORIENT == 0;
              // Центрируем часы по горизонтали/вертикали по ширине / высоте матрицы
-             if (CLOCK_ORIENT == 0) {
-               CLOCK_X = CLOCK_X_H;
-               CLOCK_Y = CLOCK_Y_H;
-             } else {
-               CLOCK_X = CLOCK_X_V;
-               CLOCK_Y = CLOCK_Y_V;
-             }
              checkClockOrigin();
              saveClockOrientation(CLOCK_ORIENT);
              break;
@@ -652,8 +646,7 @@ void parsing() {
              break;
            case 12:               // $19 12 X; - скорость прокрутки часов оверлея или 0, если часы остановлены по центру
              saveEffectSpeed(MC_CLOCK, 255 - intData[2]);
-             if (modeCode == MC_CLOCK)
-               setTimersForMode(MC_CLOCK);
+             setTimersForMode(thisMode);
              break;
            case 13:               // $19 13 X; - скорость прокрутки часов бегущей строкой
              saveEffectSpeed(MC_TEXT, 255 - intData[2]);
@@ -1060,13 +1053,17 @@ void sendPageParams(int page) {
     case 2:  // Эффекты. Вернуть: Номер эффекта, Остановлен или играет; Яркость; Скорость эффекта; Использовать в демо 
       allowed = false;
       str="$18 EF:"+String(thisMode+1);
-      str+="|BR:"+String(globalBrightness) + "|SE:" + String(255 - constrain(map(effectSpeed, D_EFFECT_SPEED_MIN,D_EFFECT_SPEED_MAX, 0, 255), 0,255));
+      str+="|BR:"+String(globalBrightness);
       if (getEffectUsage(thisMode))
           str+="|UE:1";
       else    
           str+="|UE:0";
+      // Эффекты не имеющие настройки скорости отправляют значение "Х" - программа делает ползунок настройки недоступным
+      str+="|SE:"+(thisMode == MC_CLOCK || thisMode == MC_PAINTBALL
+         ? "X" 
+         : String(255 - constrain(map(effectSpeed, D_EFFECT_SPEED_MIN,D_EFFECT_SPEED_MAX, 0, 255), 0,255)));
       // Эффекты не имеющие настройки вариации отправляют значение "Х" - программа делает ползунок настройки недоступным
-      str+="|SS:"+(thisMode == MC_DAWN_ALARM || thisMode == MC_RAINBOW_DIAG || thisMode == MC_BALLS || thisMode == MC_STARFALL || thisMode == MC_COLORS || thisMode == MC_PAINTBALL
+      str+="|SS:"+(thisMode == MC_DAWN_ALARM || thisMode == MC_RAINBOW_DIAG || thisMode == MC_BALLS || thisMode == MC_STARFALL || thisMode == MC_COLORS
          ? "X" 
          : String(effectScaleParam[thisMode]));
       str+=";";

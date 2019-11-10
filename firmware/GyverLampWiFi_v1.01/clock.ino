@@ -1,4 +1,3 @@
-// режим часов
 
 // ****************** НАСТРОЙКИ ЧАСОВ *****************
 #define MIN_COLOR CRGB::White          // цвет минут
@@ -226,11 +225,6 @@ void drawClock(byte hrs, byte mins, boolean dots, int8_t X, int8_t Y) {
     if (dots) {
       drawPixelXY(getClockX(X + 7), Y + 1, clockLED[2]);
       drawPixelXY(getClockX(X + 7), Y + 3, clockLED[2]);
-    } else {
-      if (modeCode == MC_CLOCK) {
-        drawPixelXY(getClockX(X + 7), Y + 1, 0);
-        drawPixelXY(getClockX(X + 7), Y + 3, 0);
-      }
     }
     drawDigit3x5(m10, X + 8, Y, clockLED[3]);
     drawDigit3x5(m01, X + 12 + (m01 == 1 ? -1 : 0) + (m10 == 1 && m01 != 1 ? -1 : 0) , Y, clockLED[4]); // шрифт 3x5 в котором 1 - по центру знакоместа - смещать влево на 1 колонку
@@ -240,8 +234,6 @@ void drawClock(byte hrs, byte mins, boolean dots, int8_t X, int8_t Y) {
     drawDigit3x5(h01, X + 4, Y + 6, clockLED[1]);
     if (dots) { // Мигающие точки легко ассоциируются с часами
       drawPixelXY(getClockX(X + 3), Y + 5, clockLED[2]);
-    } else {
-      drawPixelXY(getClockX(X + 3), Y + 5, 0);
     }
     drawDigit3x5(m10, X, Y, clockLED[3]);
     drawDigit3x5(m01, X + 4, Y, clockLED[4]);
@@ -450,8 +442,8 @@ void setOverlayColors() {
     clockColor();
 }
 
-// расчет времени начала рассвета
 void calculateDawnTime() {
+
   byte alrmHour;
   byte alrmMinute;
   
@@ -461,12 +453,11 @@ void calculateDawnTime() {
   int8_t alrmWeekDay = weekday()-1;                  // day of the week, Sunday is day 0   
   if (alrmWeekDay == 0) alrmWeekDay = 7;             // Sunday is day 7, Monday is day 1;
 
-  // Текущее время и день недели
   byte h = hour();
   byte m = minute();
   byte w = weekday()-1;
   if (w == 0) w = 7;
-  
+
   byte cnt = 0;
   while (cnt < 2) {
     cnt++;
@@ -481,8 +472,11 @@ void calculateDawnTime() {
     // "Сегодня" время будильника уже прошло? 
     if (alrmWeekDay == w && (h * 60L + w > alrmHour * 60L + alrmMinute)) {
       alrmWeekDay++;
+      if (alrmWeekDay == 8) alrmWeekDay = cnt == 1 ? 1 : 7;
     }
   }
+
+  // Serial.printf("Alarm: h:%d m:%d wd:%d\n", alrmHour, alrmMinute, alrmWeekDay);
   
   // расчёт времени рассвета
   if (alrmMinute > dawnDuration) {                  // если минут во времени будильника больше продолжительности рассвета
@@ -498,7 +492,16 @@ void calculateDawnTime() {
       if (dawnWeekDay == 0) dawnWeekDay = 7;                           
     }
     dawnMinute = 60 - (dawnDuration - alrmMinute);  // находим минуту рассвета в новом часе
+    if (dawnMinute == 60) {
+      dawnMinute=0; dawnHour++;
+      if (dawnHour == 24) {
+        dawnHour=0; dawnWeekDay++;
+        if (dawnWeekDay == 8) dawnWeekDay = 1;
+      }
+    }
   }
+
+  // Serial.printf("Dawn: h:%d m:%d wd:%d\n", dawnHour, dawnMinute, dawnWeekDay);
 
   Serial.print(String(F("Следующий рассвет в "))+String(dawnHour)+ F(":") + String(dawnMinute));
   switch(dawnWeekDay) {
@@ -552,7 +555,9 @@ void checkAlarmTime() {
          isAlarming = true;
          isAlarmStopped = false;
          loadingFlag = true;         
+         effectsFlag = true;
          thisMode = MC_DAWN_ALARM;
+         setTimersForMode(thisMode);
          // Реальная продолжительность рассвета
          realDawnDuration = (alrmHour * 60L + alrmMinute) - (dawnHour * 60L + dawnMinute);
          if (realDawnDuration > dawnDuration) realDawnDuration = dawnDuration;
@@ -806,6 +811,15 @@ byte getByteForDigit(byte digit) {
 }
 
 void checkClockOrigin() {
+
+  if (CLOCK_ORIENT == 0) {
+    CLOCK_X = CLOCK_X_H;
+    CLOCK_Y = CLOCK_Y_H;
+  } else {
+    CLOCK_X = CLOCK_X_V;
+    CLOCK_Y = CLOCK_Y_V;
+  }
+  
   if (CLOCK_X < 0) CLOCK_X = 0;
   if (CLOCK_Y < 0) CLOCK_Y = 0;
 
@@ -829,10 +843,7 @@ void checkClockOrigin() {
   while (CLOCK_X > 0 && CLOCK_X + cw > WIDTH)  CLOCK_X--;
   while (CLOCK_Y > 0 && CLOCK_Y + ch > HEIGHT) CLOCK_Y--;
 
-  byte clockSpeed = getEffectSpeed(MC_CLOCK);
-  if (clockSpeed >= 250) {
-     CLOCK_XC = CLOCK_X;  
-  }
+  CLOCK_XC = CLOCK_X;
 }
 
 uint32_t getNightClockColorByIndex(byte idx) {

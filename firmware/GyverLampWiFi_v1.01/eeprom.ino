@@ -123,10 +123,13 @@ void loadSettings() {
     }
 
     dawnDuration = getDawnDuration();
+
+    #if (USE_MP3 == 1)
     useAlarmSound = getUseAlarmSound();    
     alarmSound = getAlarmSound();
     dawnSound = getDawnSound();
     maxAlarmVolume = getMaxAlarmVolume();
+    #endif
 
     globalColor = getGlobalColor();           // цвет лампы, задаваемый пользователем
     globalClockColor = getGlobalClockColor(); // цвет часов в режиме MC_COLOR? режим цвета "Монохром"
@@ -171,12 +174,16 @@ void loadSettings() {
     dawnDuration = 20;
     alarmEffect = MC_DAWN_ALARM;
     useSoftAP = false;
+    
+    #if (USE_MP3 == 1)
     useAlarmSound = false;
     alarmDuration = 1;
     alarmSound = 1;
     dawnSound = 1;
-    needTurnOffClock = false;
     maxAlarmVolume = 30;
+    #endif
+    
+    needTurnOffClock = false;
 
     useRandomSequence = true;
     formatClock = 0;

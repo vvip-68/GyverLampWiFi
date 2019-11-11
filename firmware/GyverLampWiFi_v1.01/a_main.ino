@@ -1127,8 +1127,8 @@ void sendPageParams(int page) {
             str+="|AT:"+String(i+1)+" "+String(alarmHour[i])+" "+String(alarmMinute[i]);
       }
       str+="|AE:" + String(alarmEffect + 1);                   // Индекс в списке в приложении смартфона начинается с 1
-      #if (USE_MP3 == 1)
       str+="|MX:" + String(isDfPlayerOk ? "1" : "0");          // 1 - MP3 доступен; 0 - MP3 не доступен
+      #if (USE_MP3 == 1)
       str+="|MU:" + String(useAlarmSound ? "1" : "0");         // 1 - использовать звук; 0 - MP3 не использовать звук
       str+="|MD:" + String(alarmDuration); 
       str+="|MV:" + String(maxAlarmVolume); 

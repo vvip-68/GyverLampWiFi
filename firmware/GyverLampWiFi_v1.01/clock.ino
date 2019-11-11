@@ -563,7 +563,9 @@ void checkAlarmTime() {
          if (realDawnDuration > dawnDuration) realDawnDuration = dawnDuration;
          // Отключмить таймер автоперехода в демо-режим
          idleTimer.setInterval(4294967295);
+         #if (USE_MP3 == 1)
          if (useAlarmSound) PlayDawnSound();
+         #endif
          sendPageParams(95);  // Параметры, статуса IsAlarming (AL:1), чтобы изменить в смартфоне отображение активности будильника
          Serial.println(String(F("Рассвет ВКЛ в "))+String(h)+ ":" + String(m));
        }
@@ -583,9 +585,11 @@ void checkAlarmTime() {
       // Играть звук будильника
       // Если звук будильника не используется - просто запустить таймер.
       // До окончания таймера индикатор TM1637 будет мигать, лампа гореть ярко белым.
+      #if (USE_MP3 == 1)
       if (useAlarmSound) {
         PlayAlarmSound();
       }
+      #endif
       sendPageParams(95);  // Параметры, статуса IsAlarming (AL:1), чтобы изменить в смартфоне отображение активности будильника
     }
 

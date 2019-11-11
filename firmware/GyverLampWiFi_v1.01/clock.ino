@@ -87,7 +87,7 @@ boolean overlayAllowed() {
   if (!init_time) return false;
 
   // Часы влазят на матрицу?
-  if (WIDTH < 15 && HEIGHT < 11 || HEIGHT < 5) return false;
+  if (!(allowHorizontal || allowVertical)) return false;
 
   // В режиме часов бегущей строкой и в режиме "Часы" оверлей недоступер
   if (modeCode == MC_TEXT || modeCode == MC_CLOCK) return false;
@@ -212,7 +212,7 @@ void drawClock(byte hrs, byte mins, boolean dots, int8_t X, int8_t Y) {
   byte h01 = hrs % 10;
   byte m10 = mins / 10;
   byte m01 = mins % 10;
-  
+
   if (CLOCK_ORIENT == 0) {
     if (h10 == 1 && m01 != 1 && X > 0) X--;
     // 0 в часах не выводим, для центрирования сдвигаем остальные цифры влево на место нуля
@@ -304,7 +304,7 @@ void clockTicker() {
       if (halfSec) display.displayClock(hour(),minute());
       if (millis() - fade_time > 50) {
         fade_time = millis();
-        display.setBrightness(aCounter);
+        display.brightness(aCounter);        
         if (aDirection) aCounter++; else aCounter--;
         if (aCounter > 7) {
           aDirection = false;
@@ -318,7 +318,7 @@ void clockTicker() {
       // Время получено - отображать часы:минуты
       if (halfSec) {
         display.displayClock(hour(),minute());
-        display.setBrightness(isTurnedOff ? 1 : 7);
+        display.brightness(isTurnedOff ? 1 : 7);
       }
     }
   }
@@ -326,9 +326,10 @@ void clockTicker() {
 
 void clockOverlayWrapH(int8_t posX, int8_t posY) {
   byte thisLED = 0;
+  int16_t nnn;
   for (int8_t i = posX; i < posX + 15; i++) {
     for (int8_t j = posY; j < posY + 5; j++) {
-      overlayLEDs[thisLED] = leds[getPixelNumber(getClockX(i), j)];
+      overlayLEDs[thisLED] = leds[getPixelNumber(getClockX(i),j)];
       thisLED++;
     }
   }
@@ -555,7 +556,6 @@ void checkAlarmTime() {
          isAlarming = true;
          isAlarmStopped = false;
          loadingFlag = true;         
-         effectsFlag = true;
          thisMode = MC_DAWN_ALARM;
          setTimersForMode(thisMode);
          // Реальная продолжительность рассвета
@@ -604,7 +604,7 @@ void checkAlarmTime() {
 
     // Во время работы будильника индикатор плавно мерцает.
     // После завершения работы - восстановить яркость индикатора
-    display.setBrightness(7);
+    display.brightness(7);
     Serial.println(String(F("Будильник Авто-ВЫКЛ в "))+String(h)+ ":" + String(m));
     
     alarmSoundTimer.setInterval(4294967295);
@@ -667,7 +667,7 @@ void stopAlarm() {
     // Во время работы будильника индикатор плавно мерцает.
     // После завершения работы - восстановить яркость индикатора
     
-    display.setBrightness(7);
+    display.brightness(7);
     StopSound(1000);
 
     resetModes();  
@@ -812,6 +812,23 @@ byte getByteForDigit(byte digit) {
 
 void checkClockOrigin() {
 
+  if (allowVertical || allowHorizontal) {
+    // Если ширина матрицы не позволяет расположить часы горизонтально - переключить в вертикальный режим
+    if (CLOCK_ORIENT == 1 && !allowVertical) {
+      CLOCK_ORIENT = 0;
+      saveClockOrientation(CLOCK_ORIENT);
+    }
+    // Если высота матрицы не позволяет расположить часы вертикально - переключить в горизонтальный режим
+    if (CLOCK_ORIENT == 0 && !allowHorizontal) {
+      CLOCK_ORIENT = 1;
+      saveClockOrientation(CLOCK_ORIENT);
+    }
+  } else {
+    overlayEnabled = false;
+    saveClockOverlayEnabled(overlayEnabled);
+    return;
+  }
+
   if (CLOCK_ORIENT == 0) {
     CLOCK_X = CLOCK_X_H;
     CLOCK_Y = CLOCK_Y_H;
@@ -822,18 +839,6 @@ void checkClockOrigin() {
   
   if (CLOCK_X < 0) CLOCK_X = 0;
   if (CLOCK_Y < 0) CLOCK_Y = 0;
-
-  // Если высота матрицы не позволяет расположить часы вертикально - переключить в горизонтальный режим
-  if (CLOCK_ORIENT == 1 && HEIGHT < 11) {
-    CLOCK_ORIENT == 0;
-    saveClockOrientation(CLOCK_ORIENT);
-  }
-
-  // Если размеры матрицы не позволяют показывать оверлей часов - отключить 
-  if (WIDTH < 15 && HEIGHT < 11 || HEIGHT < 5) {
-    overlayEnabled = false;
-    saveClockOverlayEnabled(overlayEnabled);
-  }
 
   // ширина и высота отображения часов  
   byte cw = CLOCK_ORIENT == 0 ? 4*3 + 3*1 : 2*3 + 1; // гориз: 4 цифры * (шрифт 3 пикс шириной) 3 + пробела между цифрами) // ширина горизонтальных часов

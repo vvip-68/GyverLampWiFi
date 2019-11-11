@@ -1,4 +1,4 @@
-#define EEPROM_OK 0xA5                     // Флаг, показывающий, что EEPROM инициализирована корректными данными 
+#define EEPROM_OK 0x5F                     // Флаг, показывающий, что EEPROM инициализирована корректными данными 
 #define EFFECT_EEPROM 200                  // начальная ячейка eeprom с параметрами эффектов
 
 void loadSettings() {
@@ -410,10 +410,12 @@ int8_t getTimeZone() {
 }
 
 byte getClockOrientation() {
+  
   byte val = EEPROMread(15) == 1 ? 1 : 0;
-  // Для вертикальной ориентации нужно минимум 11 точек высота.
-  // Если условие не соблюдено - считать ориентацию горизонтальной
-  if (val == 1 && HEIGHT < 11) val == 0;
+  
+  if (val == 0 && !allowHorizontal) val == 1;
+  if (val == 1 && !allowVertical) val == 0;
+
   return val;
 }
 

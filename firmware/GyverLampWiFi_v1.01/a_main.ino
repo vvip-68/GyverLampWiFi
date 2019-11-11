@@ -486,6 +486,10 @@ void parsing() {
         // intData[2] : номер эффекта
         // intData[3] : действие = 1: значение параметра; действие = 2: 0 - выкл; 1 - вкл;
         if (intData[1] == 0) {          
+          // Если в приложении выбраны часы, но они недоступны из за размеров матрицы - брать следующий эффект
+          if (tmp_eff == MC_CLOCK){
+             if (!(allowHorizontal || allowVertical)) tmp_eff++;
+          }          
           setEffect(tmp_eff);
           BTcontrol = true;
           loadingFlag = intData[1] == 0;
@@ -587,7 +591,7 @@ void parsing() {
       case 19: 
          switch (intData[1]) {
            case 1:               // $19 1 X; - сохранить настройку X "Часы в эффектах"
-             overlayEnabled = (WIDTH < 15 && HEIGHT < 11 || HEIGHT < 5) ? false : intData[2] == 1;
+             overlayEnabled = (CLOCK_ORIENT == 0 && allowHorizontal || CLOCK_ORIENT == 1 && allowVertical) ? intData[2] == 1 : false;
              saveClockOverlayEnabled(overlayEnabled);
              if (specialMode) specialClock = overlayEnabled;
              break;
@@ -619,9 +623,14 @@ void parsing() {
              setScaleForEffect(MC_CLOCK, COLOR_MODE);
              break;
            case 6:               // $19 6 X; - Ориентация часов  X: 0 - горизонтально, 1 - вертикально
-             CLOCK_ORIENT = intData[2] == 1 ? 1  : 0;
-             // Если высота матрицы меньше минимальной для режима вертикальных часов (11 точек) положение "Вертикально не может быть задано
-             if (CLOCK_ORIENT == 1 && HEIGHT < 11) CLOCK_ORIENT == 0;
+             CLOCK_ORIENT = intData[2] == 1 ? 1  : 0;             
+             if (allowHorizontal || allowVertical) {
+               if (CLOCK_ORIENT == 0 && !allowHorizontal) CLOCK_ORIENT = 1;
+               if (CLOCK_ORIENT == 1 && !allowVertical) CLOCK_ORIENT = 0;              
+             } else {
+               overlayEnabled = false;
+               saveClockOverlayEnabled(overlayEnabled);
+             }
              // Центрируем часы по горизонтали/вертикали по ширине / высоте матрицы
              checkClockOrigin();
              saveClockOrientation(CLOCK_ORIENT);
@@ -1039,6 +1048,7 @@ void sendPageParams(int page) {
   boolean allowed;
   byte b_tmp;
   CRGB c1, c2;
+  
   switch (page) { 
     case 1:  // Настройки. Вернуть: Ширина/Высота матрицы; Яркость; Деморежм и Автосмена; Время смены режимо
       str="$18 W:"+String(WIDTH)+"|H:"+String(HEIGHT)+"|DM:";
@@ -1071,7 +1081,14 @@ void sendPageParams(int page) {
     case 3:  // Настройки часов.
       c1 = CRGB(globalClockColor);
       c2 = CRGB(globalTextColor);
-      str="$18 CE:"+String(getClockOverlayEnabled()) + "|CC:" + String(COLOR_MODE) + "|CO:" + String(CLOCK_ORIENT) + "|NC:" + String(nightClockColor) + "|CF:" + String(formatClock) + "|CT:" + String(COLOR_TEXT_MODE);
+      // Часы могут отображаться: 
+      // - вертикальные при высоте матрицы >= 11 и ширине >= 7; 
+      // - горизонтальные при ширене матрицы >= 15 и высоте >= 5
+      // Настройки часов можно отображать только если часы доступны по размерам: - или вертикальные или горизонтальные часы влазят на матрицу
+      // Настройки ориентации имеют смыcл только когда И горизонтальные И вертикальные часы могут быть отображены на матрице; В противном случае - смысла нет, так как выбор очевиден (только один вариант)
+      str="$18 CE:"+(allowVertical || allowHorizontal ? String(getClockOverlayEnabled()) : "X") + "|CC:" + String(COLOR_MODE) + 
+          "|CO:" + (allowVertical && allowHorizontal ? String(CLOCK_ORIENT) : "X") + 
+          "|NC:" + String(nightClockColor) + "|CF:" + String(formatClock) + "|CT:" + String(COLOR_TEXT_MODE);
       str += "|SC:" + String(255 - getEffectSpeed(MC_CLOCK)) + "|ST:" + String(255 - getEffectSpeed(MC_TEXT));
       str += "|C1:" + String(c1.r) + "," + String(c1.g) + "," + String(c1.b);
       str += "|C2:" + String(c2.r) + "," + String(c2.g) + "," + String(c2.b);      

@@ -1276,6 +1276,8 @@ void resetModes() {
   isNightClock = false;
   specialModeId = -1;
   loadingFlag = false;
+  wifi_print_ip = false;
+  wifi_print_ip_text = false;
 }
 
 void setEffect(byte eff) {
@@ -1295,10 +1297,11 @@ void setEffect(byte eff) {
 }
 
 void showCurrentIP() {
-  resetModes();          
+  setEffect(MC_TEXT);
   BTcontrol = false;
   AUTOPLAY = true;
   wifi_print_ip = true;
+  wifi_print_ip_text = true;
   wifi_print_idx = 0; 
   wifi_current_ip = wifi_connected ? WiFi.localIP().toString() : String(F("Нет подключения к сети WiFi"));
 }

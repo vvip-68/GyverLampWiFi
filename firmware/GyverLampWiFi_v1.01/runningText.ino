@@ -15,7 +15,7 @@ int offset = WIDTH;
 
 void runningText() {
   String text = "";
-  if (wifi_print_ip) 
+  if (wifi_print_ip_text) 
     text = wifi_current_ip;
   else if (init_time)
     switch (formatClock){

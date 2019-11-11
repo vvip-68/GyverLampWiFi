@@ -30,17 +30,6 @@
 #endif
 #endif
 
-#include <WiFiUdp.h>
-#include <TimeLib.h>
-#include <EEPROM.h>
-#include <SoftwareSerial.h>          // Установите в менеджере библиотек "EspSoftwareSerial" для ESP8266/ESP32 https://github.com/plerup/espsoftwareserial/
-#include "FastLED.h"                 // Установите в менеджере библиотек стандартную библиотеку FastLED
-#include "GyverTM1637.h"             // Внимание!!! Библиотека в папке проекта libraries изменена - константы букв и цифр переименованы с вида _1, _A на _1_, _A_ из за ошибок компиляции для ESP32
-#include "DFRobotDFPlayerMini.h"     // Установите в менеджере библиотек стандартную библиотеку DFRobotDFPlayerMini ("DFPlayer - A Mini MP3 Player For Arduino" )
-#include "timerMinim.h"
-#include "GyverButton.h"
-#include "fonts.h"
-
 #define BRIGHTNESS 32         // стандартная маскимальная яркость (0-255)
 uint16_t CURRENT_LIMIT=5000;  // лимит по току в миллиамперах, автоматически управляет яркостью (пожалей свой блок питания!) 0 - выключить лимит
 
@@ -139,6 +128,20 @@ uint16_t CURRENT_LIMIT=5000;  // лимит по току в миллиампе�
 #define PIN_BTN (4U)          // кнопка подключена сюда (PIN --- КНОПКА --- GND)
 #define DIO (23U)             // TM1637 display DIO pin
 #define CLK (22U)             // TM1637 display CLK pin
+#endif
+
+#include <WiFiUdp.h>
+#include <TimeLib.h>
+#include <EEPROM.h>
+#include "FastLED.h"                 // Установите в менеджере библиотек стандартную библиотеку FastLED
+#include "GyverTM1637.h"             // Внимание!!! Библиотека в папке проекта libraries изменена - константы букв и цифр переименованы с вида _1, _A на _1_, _A_ из за ошибок компиляции для ESP32
+#include "timerMinim.h"
+#include "GyverButton.h"
+#include "fonts.h"
+
+#if (USE_MP3 == 1)
+#include <SoftwareSerial.h>          // Установите в менеджере библиотек "EspSoftwareSerial" для ESP8266/ESP32 https://github.com/plerup/espsoftwareserial/
+#include "DFRobotDFPlayerMini.h"     // Установите в менеджере библиотек стандартную библиотеку DFRobotDFPlayerMini ("DFPlayer - A Mini MP3 Player For Arduino" )
 #endif
 
 #define COLOR_ORDER GRB       // порядок цветов на ленте. Если цвет отображается некорректно - меняйте. Начать можно с RGB
@@ -379,6 +382,7 @@ char ntpServerName[31] = "";             // Используемый серве�
 
 timerMinim ntpSyncTimer(1000 * 60 * SYNC_TIME_PERIOD);            // Сверяем время с NTP-сервером через SYNC_TIME_PERIOD минут
 
+#if (USE_MP3 == 1)
 #if defined(ESP8266)
 //SoftwareSerial mp3Serial(SRX, STX); // Используйте этот вариант, если у вас библиотека ядра ESP8266 версии 2.5.2
   SoftwareSerial mp3Serial;           // Используйте этот вариант, если у вас библиотека ядра ESP8266 версии 2.6
@@ -395,6 +399,9 @@ byte soundFolder = 0;
 byte soundFile = 0;
 int8_t fadeSoundDirection = 1;       // направление изменения громкости звука: 1 - увеличение; -1 - уменьшение
 byte fadeSoundStepCounter = 0;       // счетчик шагов изменения громкости, которое осталось сделать
+#else
+bool isDfPlayerOk = false;
+#endif
 
 //GButton butt(PIN_BTN, LOW_PULL, NORM_OPEN); // Для сенсорной кнопки
 GButton butt(PIN_BTN, HIGH_PULL, NORM_OPEN);  // Для обычной кнопки

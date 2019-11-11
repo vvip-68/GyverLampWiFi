@@ -227,8 +227,9 @@ void process() {
       FastLED.setBrightness(globalBrightness);
     }      
 
+    #if (USE_MP3 == 1)
     // Есть ли изменение статуса MP3-плеера?
-    if (USE_MP3 == 1 && dfPlayer.available()) {
+    if (dfPlayer.available()) {
 
       // Вывести детали об изменении статуса в лог
       byte msg_type = dfPlayer.readType();      
@@ -247,7 +248,8 @@ void process() {
         if (!isDfPlayerOk) Serial.println(F("MP3 плеер недоступен."));
       }
     }
-
+    #endif
+    
     // Проверить - если долгое время не было ручного управления - переключиться в автоматический режим
     if (!(isAlarming || isPlayAlarmSound)) checkIdleState();
 
@@ -442,11 +444,14 @@ void parsing() {
               // MMx   - минуты дня недели x (1-пн..7-вс)
               //
               // Остановить будильнтк, если он сработал
+              #if (USE_MP3 == 1)
               if (isDfPlayerOk) {
                 dfPlayer.stop();
               }
               soundFolder = 0;
               soundFile = 0;
+              #endif
+              
               isAlarming = false;
               isAlarmStopped = false;
 
@@ -687,6 +692,7 @@ void parsing() {
             if (isAlarming || isPlayAlarmSound) stopAlarm();            
             break;
           case 2:
+            #if (USE_MP3 == 1)          
             if (isDfPlayerOk) {
               // $20 2 X VV MA MB;
               //    X    - исп звук будильника X=0 - нет, X=1 - да 
@@ -705,8 +711,10 @@ void parsing() {
               dawnSound = intData[5] - 2;   // Индекс от приложения: 0 - нет; 1 - случайно; 2 - 1-й файл; 3 - ... -> -1 - нет; 0 - случайно; 1 - 1-й файл и т.д
               saveAlarmSounds(useAlarmSound, maxAlarmVolume, alarmSound, dawnSound);
             }
+            #endif
             break;
           case 3:
+            #if (USE_MP3 == 1)
             if (isDfPlayerOk) {
               // $20 3 X NN VV; - пример звука будильника
               //  X  - 1 играть 0 - остановить
@@ -731,8 +739,10 @@ void parsing() {
                 }
               }
             }  
+            #endif
             break;
           case 4:
+            #if (USE_MP3 == 1)
             if (isDfPlayerOk) {
               // $20 4 X NN VV; - пример звука рассвета
               //    X  - 1 играть 0 - остановить
@@ -757,14 +767,17 @@ void parsing() {
                 }
               }
             }
+            #endif
             break;
           case 5:
+            #if (USE_MP3 == 1)
             if (isDfPlayerOk && soundFolder > 0) {
              // $20 5 VV; - установит уровень громкости проигрывания примеров (когда уже играет)
              //    VV - уровень громкости
              maxAlarmVolume = constrain(intData[2],0,30);
              dfPlayer.volume(maxAlarmVolume);
             }
+            #endif
             break;
         }
         if (intData[1] == 0) {
@@ -1114,6 +1127,7 @@ void sendPageParams(int page) {
             str+="|AT:"+String(i+1)+" "+String(alarmHour[i])+" "+String(alarmMinute[i]);
       }
       str+="|AE:" + String(alarmEffect + 1);                   // Индекс в списке в приложении смартфона начинается с 1
+      #if (USE_MP3 == 1)
       str+="|MX:" + String(isDfPlayerOk ? "1" : "0");          // 1 - MP3 доступен; 0 - MP3 не доступен
       str+="|MU:" + String(useAlarmSound ? "1" : "0");         // 1 - использовать звук; 0 - MP3 не использовать звук
       str+="|MD:" + String(alarmDuration); 
@@ -1127,6 +1141,7 @@ void sendPageParams(int page) {
         str+="|MA:" + String(alarmSound+2);                      // Знач: -1 - нет; 0 - случайно; 1 и далее - файлы; -> В списке индексы: 1 - нет; 2 - случайно; 3 и далее - файлы
       }
       str+="|MP:" + String(soundFolder) + '~' + String(soundFile+2); 
+      #endif
       str+=";";
       break;
     case 5:  // Настройки подключения
@@ -1151,8 +1166,10 @@ void sendPageParams(int page) {
       cmd95 = str;
       break;
     case 96:  // Ответ демо-режима звука - сообщение по инициативе сервера
+      #if (USE_MP3 == 1)
       str ="$18 MP:" + String(soundFolder) + '~' + String(soundFile+2) + ";"; 
       cmd96 = str;
+      #endif
       break;
     case 99:  // Запрос списка эффектов
       str="$18 LE:[" + String(EFFECT_LIST) + "];"; 

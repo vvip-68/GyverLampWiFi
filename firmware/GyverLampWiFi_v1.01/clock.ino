@@ -627,6 +627,7 @@ void checkAlarmTime() {
 
   delay(0); // Для предотвращения ESP8266 Watchdog Timer
 
+  #if (USE_MP3 == 1)
   // Плавное изменение громкости будильника
   if (fadeSoundTimer.isReady()) {
     if (fadeSoundDirection > 0) {
@@ -649,12 +650,13 @@ void checkAlarmTime() {
       }
     }
   }
+  #endif
   
   delay(0); // Для предотвращения ESP8266 Watchdog Timer    
 }
 
 void stopAlarm() {
-  
+  #if (USE_MP3 == 1)
   if ((isAlarming || isPlayAlarmSound) && !isAlarmStopped) {
     Serial.println(String(F("Рассвет ВЫКЛ в ")) + String(hour())+ ":" + String(minute()));
     isAlarming = false;
@@ -684,6 +686,7 @@ void stopAlarm() {
     delay(0);    
     sendPageParams(95);  // Параметры, статуса IsAlarming (AL:1), чтобы изменить в смартфоне отображение активности будильника
   }
+  #endif
 }
 
 // Проверка необходимости включения режима 1 по установленному времени

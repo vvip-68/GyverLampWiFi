@@ -1,11 +1,12 @@
 void InitializeDfPlayer1() {
 
 #if defined(ESP8266)
-//mp3Serial.begin(9600);             // Используйте этот вариант, если у вас библиотека ядра ESP8266 версии 2.5.2
-  mp3Serial.begin(9600, SRX, STX);   // Используйте этот вариант, если у вас библиотека ядра ESP8266 версии 2.6
+//mp3Serial.begin(9600);                           // Используйте этот вариант, если у вас библиотека ядра ESP8266 версии 2.5.2
+  mp3Serial.begin(9600, SRX, STX);                 // Используйте этот вариант, если у вас библиотека ядра ESP8266 версии 2.6
 #endif
 #if defined(ESP32)
-  mp3Serial.begin(9600, SWSERIAL_8N1, SRX, STX);   
+  mp3Serial.begin(9600, SWSERIAL_8N1, SRX, STX);   // Используйте этот вариант, если у вас библиотека EspSoftwareSerial v6.0
+//mp3Serial.begin(9600, SRX, STX);                 // Используйте этот вариант, если у вас библиотека EspSoftwareSerial v5.4
 #endif
 
   dfPlayer.begin(mp3Serial, true, true);

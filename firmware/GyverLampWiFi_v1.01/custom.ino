@@ -104,6 +104,7 @@ void processEffect(byte aMode) {
     case MC_FILL_COLOR:          fillColorProcedure(); break;
     case MC_COLORS:              colorsRoutine(); break;
     case MC_LIGHTERS:            lightersRoutine(); break;
+    case MC_SWIRL:               swirlRoutine(); break;
     case MC_TEXT:                runningText(); break;
     case MC_CLOCK:               clockRoutine(); break;
     case MC_DAWN_ALARM:          dawnProcedure(); break;
@@ -206,9 +207,9 @@ void prevModeHandler() {
 
 void setTimersForMode(byte aMode) {
   effectSpeed = getEffectSpeed(aMode);
-  if (aMode == MC_PAINTBALL)
-    effectTimer.setInterval(10);   // Режим Пейнтбол смотрится (работает) только на максимальной скорости
-  else
+  //if (aMode == MC_PAINTBALL)
+  //  effectTimer.setInterval(10);   // Режим Пейнтбол смотрится (работает) только на максимальной скорости
+  //else
     effectTimer.setInterval(effectSpeed);
   byte clockSpeed = getEffectSpeed(MC_CLOCK);
   if (clockSpeed >= 240) {

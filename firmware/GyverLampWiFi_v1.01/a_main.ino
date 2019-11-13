@@ -12,7 +12,7 @@ boolean parseStarted;
 char incomeBuffer[UDP_PACKET_MAX_SIZE];           // Буфер для приема строки команды из wifi udp сокета
 char replyBuffer[8];                              // ответ клиенту - подтверждения получения команды: "ack;/r/n/0"
 
-unsigned long ackCounter = 0;
+byte ackCounter = 0;
 byte tmpSaveMode = 0;
 
 void process() {  

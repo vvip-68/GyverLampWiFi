@@ -24,6 +24,8 @@
     oceanNoise();         // морская вода
 */
 
+byte lastOverlayMode;
+
 // ************************* СВОЙ СПИСОК РЕЖИМОВ ************************
 // список можно менять, соблюдая его структуру. Можно удалять и добавлять эффекты, ставить их в
 // любой последовательности или вообще оставить ОДИН. Удалив остальные case и break. Cтруктура оч простая:
@@ -44,7 +46,7 @@ void doEffectWithOverlay(byte aMode) {
   // Просто часы режима MC_CLOCK рисуются как оверлей на черном фоне
   bool needOverlay = aMode == MC_CLOCK || (overlayEnabled && overlayAllowed());
 
-  if (needOverlay) {
+  if (needOverlay && lastOverlayMode == thisMode) {
     if (!loadingFlag && needUnwrap()) {
       if (CLOCK_ORIENT == 0)
         clockOverlayUnwrapH(CLOCK_XC, CLOCK_Y);
@@ -73,6 +75,7 @@ void doEffectWithOverlay(byte aMode) {
       clockOverlayWrapH(CLOCK_XC, CLOCK_Y);
     else  
       clockOverlayWrapV(CLOCK_XC, CLOCK_Y);       
+    lastOverlayMode = thisMode;
   }  
 
   if (effectReady) loadingFlag = false;

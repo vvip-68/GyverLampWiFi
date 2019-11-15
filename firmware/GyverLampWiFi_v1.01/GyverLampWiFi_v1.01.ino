@@ -520,6 +520,7 @@ void startWiFi() {
   
   WiFi.disconnect(true);
   wifi_connected = false;
+  delay(10);               //Иначе получаем Core 1 panic'ed (Cache disabled but cached memory region accessed)
   WiFi.mode(WIFI_STA);
  
   // Пытаемся соединиться с роутером в сети

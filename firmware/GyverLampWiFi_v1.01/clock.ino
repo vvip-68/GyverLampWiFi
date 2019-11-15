@@ -1,4 +1,3 @@
-// режим часов
 
 // ****************** НАСТРОЙКИ ЧАСОВ *****************
 #define MIN_COLOR CRGB::White          // цвет минут
@@ -45,7 +44,7 @@ unsigned long sendNTPpacket(IPAddress& address) {
   // all NTP fields have been given values, now
   // you can send a packet requesting a timestamp:
   udp.beginPacket(address, 123); //NTP requests are to port 123
-  udp.write(packetBuffer, NTP_PACKET_SIZE);
+  udp.write((const uint8_t*) packetBuffer, NTP_PACKET_SIZE);  
   udp.endPacket();
 }
 
@@ -88,7 +87,7 @@ boolean overlayAllowed() {
   if (!init_time) return false;
 
   // Часы влазят на матрицу?
-  if (WIDTH < 15 && HEIGHT < 11 || HEIGHT < 5) return false;
+  if (!(allowHorizontal || allowVertical)) return false;
 
   // В режиме часов бегущей строкой и в режиме "Часы" оверлей недоступер
   if (modeCode == MC_TEXT || modeCode == MC_CLOCK) return false;
@@ -213,7 +212,7 @@ void drawClock(byte hrs, byte mins, boolean dots, int8_t X, int8_t Y) {
   byte h01 = hrs % 10;
   byte m10 = mins / 10;
   byte m01 = mins % 10;
-  
+
   if (CLOCK_ORIENT == 0) {
     if (h10 == 1 && m01 != 1 && X > 0) X--;
     // 0 в часах не выводим, для центрирования сдвигаем остальные цифры влево на место нуля
@@ -226,11 +225,6 @@ void drawClock(byte hrs, byte mins, boolean dots, int8_t X, int8_t Y) {
     if (dots) {
       drawPixelXY(getClockX(X + 7), Y + 1, clockLED[2]);
       drawPixelXY(getClockX(X + 7), Y + 3, clockLED[2]);
-    } else {
-      if (modeCode == MC_CLOCK) {
-        drawPixelXY(getClockX(X + 7), Y + 1, 0);
-        drawPixelXY(getClockX(X + 7), Y + 3, 0);
-      }
     }
     drawDigit3x5(m10, X + 8, Y, clockLED[3]);
     drawDigit3x5(m01, X + 12 + (m01 == 1 ? -1 : 0) + (m10 == 1 && m01 != 1 ? -1 : 0) , Y, clockLED[4]); // шрифт 3x5 в котором 1 - по центру знакоместа - смещать влево на 1 колонку
@@ -240,8 +234,6 @@ void drawClock(byte hrs, byte mins, boolean dots, int8_t X, int8_t Y) {
     drawDigit3x5(h01, X + 4, Y + 6, clockLED[1]);
     if (dots) { // Мигающие точки легко ассоциируются с часами
       drawPixelXY(getClockX(X + 3), Y + 5, clockLED[2]);
-    } else {
-      drawPixelXY(getClockX(X + 3), Y + 5, 0);
     }
     drawDigit3x5(m10, X, Y, clockLED[3]);
     drawDigit3x5(m01, X + 4, Y, clockLED[4]);
@@ -312,7 +304,7 @@ void clockTicker() {
       if (halfSec) display.displayClock(hour(),minute());
       if (millis() - fade_time > 50) {
         fade_time = millis();
-        display.setBrightness(aCounter);
+        display.brightness(aCounter);        
         if (aDirection) aCounter++; else aCounter--;
         if (aCounter > 7) {
           aDirection = false;
@@ -326,7 +318,7 @@ void clockTicker() {
       // Время получено - отображать часы:минуты
       if (halfSec) {
         display.displayClock(hour(),minute());
-        display.setBrightness(isTurnedOff ? 1 : 7);
+        display.brightness(isTurnedOff ? 1 : 7);
       }
     }
   }
@@ -334,9 +326,10 @@ void clockTicker() {
 
 void clockOverlayWrapH(int8_t posX, int8_t posY) {
   byte thisLED = 0;
+  int16_t nnn;
   for (int8_t i = posX; i < posX + 15; i++) {
     for (int8_t j = posY; j < posY + 5; j++) {
-      overlayLEDs[thisLED] = leds[getPixelNumber(getClockX(i), j)];
+      overlayLEDs[thisLED] = leds[getPixelNumber(getClockX(i),j)];
       thisLED++;
     }
   }
@@ -388,7 +381,8 @@ boolean needUnwrap() {
       modeCode == MC_STARFALL ||
       modeCode == MC_BALLS ||
       modeCode == MC_FIRE ||
-      modeCode == MC_PAINTBALL) return true;
+      modeCode == MC_PAINTBALL ||
+      modeCode == MC_SWIRL) return true;
   else return false;
 }
 
@@ -426,6 +420,8 @@ void setOverlayColors() {
       case MC_RAINBOW_VERT:
       case MC_RAINBOW_DIAG: 
       case MC_LIGHTERS:
+      case MC_PAINTBALL:
+      case MC_SWIRL:
       case MC_NOISE_PLASMA:
         contrastClock();
         break;
@@ -449,8 +445,8 @@ void setOverlayColors() {
     clockColor();
 }
 
-// расчет времени начала рассвета
 void calculateDawnTime() {
+
   byte alrmHour;
   byte alrmMinute;
   
@@ -460,12 +456,11 @@ void calculateDawnTime() {
   int8_t alrmWeekDay = weekday()-1;                  // day of the week, Sunday is day 0   
   if (alrmWeekDay == 0) alrmWeekDay = 7;             // Sunday is day 7, Monday is day 1;
 
-  // Текущее время и день недели
   byte h = hour();
   byte m = minute();
   byte w = weekday()-1;
   if (w == 0) w = 7;
-  
+
   byte cnt = 0;
   while (cnt < 2) {
     cnt++;
@@ -478,10 +473,13 @@ void calculateDawnTime() {
     alrmMinute = alarmMinute[alrmWeekDay-1];
   
     // "Сегодня" время будильника уже прошло? 
-    if (alrmWeekDay == w && (h * 60L + w > alrmHour * 60L + alrmMinute)) {
+    if (alrmWeekDay == w && (h * 60L + m > alrmHour * 60L + alrmMinute)) {
       alrmWeekDay++;
+      if (alrmWeekDay == 8) alrmWeekDay = cnt == 1 ? 1 : 7;
     }
   }
+
+  // Serial.printf("Alarm: h:%d m:%d wd:%d\n", alrmHour, alrmMinute, alrmWeekDay);
   
   // расчёт времени рассвета
   if (alrmMinute > dawnDuration) {                  // если минут во времени будильника больше продолжительности рассвета
@@ -497,7 +495,16 @@ void calculateDawnTime() {
       if (dawnWeekDay == 0) dawnWeekDay = 7;                           
     }
     dawnMinute = 60 - (dawnDuration - alrmMinute);  // находим минуту рассвета в новом часе
+    if (dawnMinute == 60) {
+      dawnMinute=0; dawnHour++;
+      if (dawnHour == 24) {
+        dawnHour=0; dawnWeekDay++;
+        if (dawnWeekDay == 8) dawnWeekDay = 1;
+      }
+    }
   }
+
+  // Serial.printf("Dawn: h:%d m:%d wd:%d\n", dawnHour, dawnMinute, dawnWeekDay);
 
   Serial.print(String(F("Следующий рассвет в "))+String(dawnHour)+ F(":") + String(dawnMinute));
   switch(dawnWeekDay) {
@@ -552,12 +559,15 @@ void checkAlarmTime() {
          isAlarmStopped = false;
          loadingFlag = true;         
          thisMode = MC_DAWN_ALARM;
+         setTimersForMode(thisMode);
          // Реальная продолжительность рассвета
          realDawnDuration = (alrmHour * 60L + alrmMinute) - (dawnHour * 60L + dawnMinute);
          if (realDawnDuration > dawnDuration) realDawnDuration = dawnDuration;
          // Отключмить таймер автоперехода в демо-режим
          idleTimer.setInterval(4294967295);
+         #if (USE_MP3 == 1)
          if (useAlarmSound) PlayDawnSound();
+         #endif
          sendPageParams(95);  // Параметры, статуса IsAlarming (AL:1), чтобы изменить в смартфоне отображение активности будильника
          Serial.println(String(F("Рассвет ВКЛ в "))+String(h)+ ":" + String(m));
        }
@@ -577,9 +587,11 @@ void checkAlarmTime() {
       // Играть звук будильника
       // Если звук будильника не используется - просто запустить таймер.
       // До окончания таймера индикатор TM1637 будет мигать, лампа гореть ярко белым.
+      #if (USE_MP3 == 1)
       if (useAlarmSound) {
         PlayAlarmSound();
       }
+      #endif
       sendPageParams(95);  // Параметры, статуса IsAlarming (AL:1), чтобы изменить в смартфоне отображение активности будильника
     }
 
@@ -598,7 +610,7 @@ void checkAlarmTime() {
 
     // Во время работы будильника индикатор плавно мерцает.
     // После завершения работы - восстановить яркость индикатора
-    display.setBrightness(7);
+    display.brightness(7);
     Serial.println(String(F("Будильник Авто-ВЫКЛ в "))+String(h)+ ":" + String(m));
     
     alarmSoundTimer.setInterval(4294967295);
@@ -621,6 +633,7 @@ void checkAlarmTime() {
 
   delay(0); // Для предотвращения ESP8266 Watchdog Timer
 
+  #if (USE_MP3 == 1)
   // Плавное изменение громкости будильника
   if (fadeSoundTimer.isReady()) {
     if (fadeSoundDirection > 0) {
@@ -643,12 +656,13 @@ void checkAlarmTime() {
       }
     }
   }
+  #endif
   
   delay(0); // Для предотвращения ESP8266 Watchdog Timer    
 }
 
 void stopAlarm() {
-  
+  #if (USE_MP3 == 1)
   if ((isAlarming || isPlayAlarmSound) && !isAlarmStopped) {
     Serial.println(String(F("Рассвет ВЫКЛ в ")) + String(hour())+ ":" + String(minute()));
     isAlarming = false;
@@ -661,7 +675,7 @@ void stopAlarm() {
     // Во время работы будильника индикатор плавно мерцает.
     // После завершения работы - восстановить яркость индикатора
     
-    display.setBrightness(7);
+    display.brightness(7);
     StopSound(1000);
 
     resetModes();  
@@ -678,6 +692,7 @@ void stopAlarm() {
     delay(0);    
     sendPageParams(95);  // Параметры, статуса IsAlarming (AL:1), чтобы изменить в смартфоне отображение активности будильника
   }
+  #endif
 }
 
 // Проверка необходимости включения режима 1 по установленному времени
@@ -805,20 +820,34 @@ byte getByteForDigit(byte digit) {
 }
 
 void checkClockOrigin() {
-  if (CLOCK_X < 0) CLOCK_X = 0;
-  if (CLOCK_Y < 0) CLOCK_Y = 0;
 
-  // Если высота матрицы не позволяет расположить часы вертикально - переключить в горизонтальный режим
-  if (CLOCK_ORIENT == 1 && HEIGHT < 11) {
-    CLOCK_ORIENT == 0;
-    saveClockOrientation(CLOCK_ORIENT);
-  }
-
-  // Если размеры матрицы не позволяют показывать оверлей часов - отключить 
-  if (WIDTH < 15 && HEIGHT < 11 || HEIGHT < 5) {
+  if (allowVertical || allowHorizontal) {
+    // Если ширина матрицы не позволяет расположить часы горизонтально - переключить в вертикальный режим
+    if (CLOCK_ORIENT == 1 && !allowVertical) {
+      CLOCK_ORIENT = 0;
+      saveClockOrientation(CLOCK_ORIENT);
+    }
+    // Если высота матрицы не позволяет расположить часы вертикально - переключить в горизонтальный режим
+    if (CLOCK_ORIENT == 0 && !allowHorizontal) {
+      CLOCK_ORIENT = 1;
+      saveClockOrientation(CLOCK_ORIENT);
+    }
+  } else {
     overlayEnabled = false;
     saveClockOverlayEnabled(overlayEnabled);
+    return;
   }
+
+  if (CLOCK_ORIENT == 0) {
+    CLOCK_X = CLOCK_X_H;
+    CLOCK_Y = CLOCK_Y_H;
+  } else {
+    CLOCK_X = CLOCK_X_V;
+    CLOCK_Y = CLOCK_Y_V;
+  }
+  
+  if (CLOCK_X < 0) CLOCK_X = 0;
+  if (CLOCK_Y < 0) CLOCK_Y = 0;
 
   // ширина и высота отображения часов  
   byte cw = CLOCK_ORIENT == 0 ? 4*3 + 3*1 : 2*3 + 1; // гориз: 4 цифры * (шрифт 3 пикс шириной) 3 + пробела между цифрами) // ширина горизонтальных часов
@@ -828,10 +857,7 @@ void checkClockOrigin() {
   while (CLOCK_X > 0 && CLOCK_X + cw > WIDTH)  CLOCK_X--;
   while (CLOCK_Y > 0 && CLOCK_Y + ch > HEIGHT) CLOCK_Y--;
 
-  byte clockSpeed = getEffectSpeed(MC_CLOCK);
-  if (clockSpeed >= 250) {
-     CLOCK_XC = CLOCK_X;  
-  }
+  CLOCK_XC = CLOCK_X;
 }
 
 uint32_t getNightClockColorByIndex(byte idx) {

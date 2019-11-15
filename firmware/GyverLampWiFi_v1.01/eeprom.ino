@@ -1,4 +1,4 @@
-#define EEPROM_OK 0xA5                     // Флаг, показывающий, что EEPROM инициализирована корректными данными 
+#define EEPROM_OK 0x5F                     // Флаг, показывающий, что EEPROM инициализирована корректными данными 
 #define EFFECT_EEPROM 200                  // начальная ячейка eeprom с параметрами эффектов
 
 void loadSettings() {
@@ -123,10 +123,13 @@ void loadSettings() {
     }
 
     dawnDuration = getDawnDuration();
+
+    #if (USE_MP3 == 1)
     useAlarmSound = getUseAlarmSound();    
     alarmSound = getAlarmSound();
     dawnSound = getDawnSound();
     maxAlarmVolume = getMaxAlarmVolume();
+    #endif
 
     globalColor = getGlobalColor();           // цвет лампы, задаваемый пользователем
     globalClockColor = getGlobalClockColor(); // цвет часов в режиме MC_COLOR? режим цвета "Монохром"
@@ -171,12 +174,16 @@ void loadSettings() {
     dawnDuration = 20;
     alarmEffect = MC_DAWN_ALARM;
     useSoftAP = false;
+    
+    #if (USE_MP3 == 1)
     useAlarmSound = false;
     alarmDuration = 1;
     alarmSound = 1;
     dawnSound = 1;
-    needTurnOffClock = false;
     maxAlarmVolume = 30;
+    #endif
+    
+    needTurnOffClock = false;
 
     useRandomSequence = true;
     formatClock = 0;
@@ -248,8 +255,12 @@ void saveDefaults() {
     
   strcpy(apName, DEFAULT_AP_NAME);
   strcpy(apPass, DEFAULT_AP_PASS);
+  strcpy(ssid, NETWORK_SSID);
+  strcpy(pass, NETWORK_PASS);
   setSoftAPName(String(apName));
   setSoftAPPass(String(apPass));
+  setSsid(String(ssid));
+  setPass(String(pass));
   
   strcpy(ntpServerName, DEFAULT_NTP_SERVER);
   setNtpServer(String(ntpServerName));
@@ -406,10 +417,12 @@ int8_t getTimeZone() {
 }
 
 byte getClockOrientation() {
+  
   byte val = EEPROMread(15) == 1 ? 1 : 0;
-  // Для вертикальной ориентации нужно минимум 11 точек высота.
-  // Если условие не соблюдено - считать ориентацию горизонтальной
-  if (val == 1 && HEIGHT < 11) val == 0;
+  
+  if (val == 0 && !allowHorizontal) val == 1;
+  if (val == 1 && !allowVertical) val == 0;
+
   return val;
 }
 

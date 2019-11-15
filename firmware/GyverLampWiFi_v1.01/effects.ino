@@ -46,7 +46,8 @@ void snowRoutine() {
   }
 }
 
-// ------------- пейнтбол -------------
+// ------------- ПЕЙНТБОЛ -------------
+
 const uint8_t BorderWidth = 1U;
 void lightBallsRoutine() {
   if (loadingFlag) {
@@ -54,6 +55,7 @@ void lightBallsRoutine() {
     modeCode = MC_PAINTBALL;
     FastLED.clear();  // очистить
   }
+  
   // Apply some blurring to whatever's already on the matrix
   // Note that we never actually clear the matrix, we just constantly
   // blur it repeatedly.  Since the blurring is 'lossy', there's
@@ -70,10 +72,13 @@ void lightBallsRoutine() {
   // The color of each point shifts over time, each at a different speed.
   uint32_t ms = millis();
   int16_t idx, wh = WIDTH * HEIGHT;
-  idx = XY( i, j); if (idx < wh) leds[idx] += CHSV( ms / 29, 200U, 255U);
-  idx = XY( j, k); if (idx < wh) leds[idx] += CHSV( ms / 41, 200U, 255U);
-  idx = XY( k, m); if (idx < wh) leds[idx] += CHSV( ms / 73, 200U, 255U);
-  idx = XY( m, i); if (idx < wh) leds[idx] += CHSV( ms / 97, 200U, 255U);
+
+  byte cnt = map(255-effectScaleParam[MC_PAINTBALL],0,255,1, 5);
+  
+  if (cnt <= 1) { idx = XY(i, j); if (idx < wh) leds[idx] += CHSV( ms / 29, 200U, 255U); }
+  if (cnt <= 2) { idx = XY(j, k); if (idx < wh) leds[idx] += CHSV( ms / 41, 200U, 255U); }
+  if (cnt <= 3) { idx = XY(k, m); if (idx < wh) leds[idx] += CHSV( ms / 73, 200U, 255U); }
+  if (cnt <= 4) { idx = XY(m, i); if (idx < wh) leds[idx] += CHSV( ms / 97, 200U, 255U); }
 }
 
 // Trivial XY function for the SmartMatrix; use a different XY
@@ -82,7 +87,7 @@ uint16_t XY(uint8_t x, uint8_t y)
 {
   uint16_t i;
   uint8_t reverse;
-  if (WIDTH > HEIGHT) {
+  if (WIDTH >= HEIGHT) {
     if (y & 0x01)
     {
       // Odd rows run backwards
@@ -111,7 +116,50 @@ uint16_t XY(uint8_t x, uint8_t y)
   return i;
 }
 
+// ------------- ВОДОВОРОТ -------------
+
+void swirlRoutine() {
+  if (loadingFlag) {
+    loadingFlag = false;
+    modeCode = MC_SWIRL;
+    FastLED.clear();  // очистить
+  }
+
+  byte variation = map(255-effectScaleParam[MC_SWIRL],0,255,1, 5);
+
+  // Apply some blurring to whatever's already on the matrix
+  // Note that we never actually clear the matrix, we just constantly
+  // blur it repeatedly.  Since the blurring is 'lossy', there's
+  // an automatic trend toward black -- by design.
+  uint8_t blurAmount = beatsin8(2,10,255);
+  blur2d( leds, WIDTH, HEIGHT, blurAmount);
+
+  // Use two out-of-sync sine waves
+  uint8_t  i = beatsin8( 27, BorderWidth, HEIGHT - BorderWidth);
+  uint8_t  j = beatsin8( 41, BorderWidth, WIDTH - BorderWidth);
+  
+  // Also calculate some reflections
+  uint8_t ni = (WIDTH-1)-i;
+  uint8_t nj = (HEIGHT-1)-j;
+
+  int16_t idx, wh = WIDTH * HEIGHT;
+  
+  // The color of each point shifts over time, each at a different speed.
+  uint32_t ms = millis();  
+  idx = XY2( i, j); if (idx < wh) leds[idx] += CHSV( ms / 11, 200, 255);
+  idx = XY2( j, i); if (idx < wh) leds[idx] += CHSV( ms / 13, 200, 255);
+  idx = XY2(ni,nj); if (idx < wh) leds[idx] += CHSV( ms / 17, 200, 255);
+  idx = XY2(nj,ni); if (idx < wh) leds[idx] += CHSV( ms / 29, 200, 255);
+  idx = XY2( i,nj); if (idx < wh) leds[idx] += CHSV( ms / 37, 200, 255);
+  idx = XY2(ni, j); if (idx < wh) leds[idx] += CHSV( ms / 41, 200, 255);    
+}
+
+uint16_t XY2( uint8_t x, uint8_t y) { 
+  return (y * WIDTH) + x; 
+}
+
 // ***************************** БЛУДНЫЙ КУБИК *****************************
+
 int coordB[2];
 int8_t vectorB[2];
 CRGB ballColor;

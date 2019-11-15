@@ -24,6 +24,8 @@
     oceanNoise();         // морская вода
 */
 
+byte lastOverlayMode;
+
 // ************************* СВОЙ СПИСОК РЕЖИМОВ ************************
 // список можно менять, соблюдая его структуру. Можно удалять и добавлять эффекты, ставить их в
 // любой последовательности или вообще оставить ОДИН. Удалив остальные case и break. Cтруктура оч простая:
@@ -44,7 +46,7 @@ void doEffectWithOverlay(byte aMode) {
   // Просто часы режима MC_CLOCK рисуются как оверлей на черном фоне
   bool needOverlay = aMode == MC_CLOCK || (overlayEnabled && overlayAllowed());
 
-  if (needOverlay) {
+  if (needOverlay && lastOverlayMode == thisMode) {
     if (!loadingFlag && needUnwrap()) {
       if (CLOCK_ORIENT == 0)
         clockOverlayUnwrapH(CLOCK_XC, CLOCK_Y);
@@ -73,6 +75,7 @@ void doEffectWithOverlay(byte aMode) {
       clockOverlayWrapH(CLOCK_XC, CLOCK_Y);
     else  
       clockOverlayWrapV(CLOCK_XC, CLOCK_Y);       
+    lastOverlayMode = thisMode;
   }  
 
   if (effectReady) loadingFlag = false;
@@ -104,6 +107,7 @@ void processEffect(byte aMode) {
     case MC_FILL_COLOR:          fillColorProcedure(); break;
     case MC_COLORS:              colorsRoutine(); break;
     case MC_LIGHTERS:            lightersRoutine(); break;
+    case MC_SWIRL:               swirlRoutine(); break;
     case MC_TEXT:                runningText(); break;
     case MC_CLOCK:               clockRoutine(); break;
     case MC_DAWN_ALARM:          dawnProcedure(); break;
@@ -206,9 +210,12 @@ void prevModeHandler() {
 
 void setTimersForMode(byte aMode) {
   effectSpeed = getEffectSpeed(aMode);
-  effectTimer.setInterval(effectSpeed);
+  //if (aMode == MC_PAINTBALL)
+  //  effectTimer.setInterval(10);   // Режим Пейнтбол смотрится (работает) только на максимальной скорости
+  //else
+    effectTimer.setInterval(effectSpeed);
   byte clockSpeed = getEffectSpeed(MC_CLOCK);
-  if (clockSpeed >= 250) {
+  if (clockSpeed >= 240) {
     clockTimer.setInterval(4294967295);
     checkClockOrigin();
   } else {

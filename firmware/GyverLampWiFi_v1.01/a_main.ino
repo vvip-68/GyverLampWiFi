@@ -1,4 +1,4 @@
-#define UDP_PACKET_MAX_SIZE  512
+#define UDP_PACKET_MAX_SIZE  1024
 #define PARSE_AMOUNT 8          // максимальное количество значений в массиве, который хотим получить
 #define header '$'              // стартовый символ
 #define divider ' '             // разделительный символ
@@ -9,11 +9,10 @@ int16_t intData[PARSE_AMOUNT];  // массив численных значен�
 uint32_t prevColor;
 boolean recievedFlag;
 boolean parseStarted;
-byte lastMode = 0;
 char incomeBuffer[UDP_PACKET_MAX_SIZE];           // Буфер для приема строки команды из wifi udp сокета
-char replyBuffer[7];                              // ответ клиенту - подтверждения получения команды: "ack;/r/n/0"
+char replyBuffer[8];                              // ответ клиенту - подтверждения получения команды: "ack;/r/n/0"
 
-unsigned long ackCounter = 0;
+byte ackCounter = 0;
 byte tmpSaveMode = 0;
 
 void process() {  
@@ -228,8 +227,9 @@ void process() {
       FastLED.setBrightness(globalBrightness);
     }      
 
+    #if (USE_MP3 == 1)
     // Есть ли изменение статуса MP3-плеера?
-    if (USE_MP3 == 1 && dfPlayer.available()) {
+    if (dfPlayer.available()) {
 
       // Вывести детали об изменении статуса в лог
       byte msg_type = dfPlayer.readType();      
@@ -248,7 +248,8 @@ void process() {
         if (!isDfPlayerOk) Serial.println(F("MP3 плеер недоступен."));
       }
     }
-
+    #endif
+    
     // Проверить - если долгое время не было ручного управления - переключиться в автоматический режим
     if (!(isAlarming || isPlayAlarmSound)) checkIdleState();
 
@@ -349,9 +350,10 @@ void parsing() {
            MM - минуты срабатывания
            NN - эффект: -2 - выключено; -1 - выключить матрицу; 0 - случайный режим и далее по кругу; 1 и далее - список режимов ALARM_LIST 
     23 - прочие настройки
-       - $23 0 VAL  - лимито по потребляемому току
+       - $23 0 VAL  - лимит по потребляемому току
   */  
-  if (recievedFlag) {      // если получены данные
+  // Если прием данных завершен и управляющая команда в intData[0] распознана
+  if (recievedFlag && intData[0] > 0 && intData[0] <= 23) {
     recievedFlag = false;
 
     // Режимы 16,17,18  не сбрасывают idleTimer
@@ -361,7 +363,8 @@ void parsing() {
     }
 
     // Режимы кроме 4 (яркость), 14 (новый спец-режим) и 18 (запрос параметров страницы),
-    // 19 (настройки часов), 20 (настройки будильника), 21 (настройки сети) сбрасывают спец-режим
+    // 19 (настройки часов), 20 (настройки будильника), 21 (настройки сети) 
+    // 23 (доп.параметры) - сбрасывают спец-режим
     if (intData[0] != 4 && intData[0] != 14 && intData[0] != 18 && intData[0] != 19 &&
         intData[0] != 20 && intData[0] != 21 && intData[0] != 23) {
       if (specialMode) {
@@ -441,11 +444,14 @@ void parsing() {
               // MMx   - минуты дня недели x (1-пн..7-вс)
               //
               // Остановить будильнтк, если он сработал
+              #if (USE_MP3 == 1)
               if (isDfPlayerOk) {
                 dfPlayer.stop();
               }
               soundFolder = 0;
               soundFile = 0;
+              #endif
+              
               isAlarming = false;
               isAlarmStopped = false;
 
@@ -485,6 +491,10 @@ void parsing() {
         // intData[2] : номер эффекта
         // intData[3] : действие = 1: значение параметра; действие = 2: 0 - выкл; 1 - вкл;
         if (intData[1] == 0) {          
+          // Если в приложении выбраны часы, но они недоступны из за размеров матрицы - брать следующий эффект
+          if (tmp_eff == MC_CLOCK){
+             if (!(allowHorizontal || allowVertical)) tmp_eff++;
+          }          
           setEffect(tmp_eff);
           BTcontrol = true;
           loadingFlag = intData[1] == 0;
@@ -519,6 +529,7 @@ void parsing() {
         break;
       case 15: 
         if (intData[2] == 0) {
+          if (intData[1] == 255) intData[1] = 254;
           effectSpeed = 255 - intData[1]; 
           saveEffectSpeed(thisMode, effectSpeed);
           if (thisMode == MC_FILL_COLOR) { 
@@ -585,7 +596,7 @@ void parsing() {
       case 19: 
          switch (intData[1]) {
            case 1:               // $19 1 X; - сохранить настройку X "Часы в эффектах"
-             overlayEnabled = (WIDTH < 15 && HEIGHT < 11 || HEIGHT < 5) ? false : intData[2] == 1;
+             overlayEnabled = (CLOCK_ORIENT == 0 && allowHorizontal || CLOCK_ORIENT == 1 && allowVertical) ? intData[2] == 1 : false;
              saveClockOverlayEnabled(overlayEnabled);
              if (specialMode) specialClock = overlayEnabled;
              break;
@@ -617,17 +628,15 @@ void parsing() {
              setScaleForEffect(MC_CLOCK, COLOR_MODE);
              break;
            case 6:               // $19 6 X; - Ориентация часов  X: 0 - горизонтально, 1 - вертикально
-             CLOCK_ORIENT = intData[2] == 1 ? 1  : 0;
-             // Если высота матрицы меньше минимальной для режима вертикальных часов (11 точек) положение "Вертикально не может быть задано
-             if (CLOCK_ORIENT == 1 && HEIGHT < 11) CLOCK_ORIENT == 0;
-             // Центрируем часы по горизонтали/вертикали по ширине / высоте матрицы
-             if (CLOCK_ORIENT == 0) {
-               CLOCK_X = CLOCK_X_H;
-               CLOCK_Y = CLOCK_Y_H;
+             CLOCK_ORIENT = intData[2] == 1 ? 1  : 0;             
+             if (allowHorizontal || allowVertical) {
+               if (CLOCK_ORIENT == 0 && !allowHorizontal) CLOCK_ORIENT = 1;
+               if (CLOCK_ORIENT == 1 && !allowVertical) CLOCK_ORIENT = 0;              
              } else {
-               CLOCK_X = CLOCK_X_V;
-               CLOCK_Y = CLOCK_Y_V;
+               overlayEnabled = false;
+               saveClockOverlayEnabled(overlayEnabled);
              }
+             // Центрируем часы по горизонтали/вертикали по ширине / высоте матрицы
              checkClockOrigin();
              saveClockOrientation(CLOCK_ORIENT);
              break;
@@ -651,8 +660,7 @@ void parsing() {
              break;
            case 12:               // $19 12 X; - скорость прокрутки часов оверлея или 0, если часы остановлены по центру
              saveEffectSpeed(MC_CLOCK, 255 - intData[2]);
-             if (modeCode == MC_CLOCK)
-               setTimersForMode(MC_CLOCK);
+             setTimersForMode(thisMode);
              break;
            case 13:               // $19 13 X; - скорость прокрутки часов бегущей строкой
              saveEffectSpeed(MC_TEXT, 255 - intData[2]);
@@ -684,6 +692,7 @@ void parsing() {
             if (isAlarming || isPlayAlarmSound) stopAlarm();            
             break;
           case 2:
+            #if (USE_MP3 == 1)          
             if (isDfPlayerOk) {
               // $20 2 X VV MA MB;
               //    X    - исп звук будильника X=0 - нет, X=1 - да 
@@ -702,8 +711,10 @@ void parsing() {
               dawnSound = intData[5] - 2;   // Индекс от приложения: 0 - нет; 1 - случайно; 2 - 1-й файл; 3 - ... -> -1 - нет; 0 - случайно; 1 - 1-й файл и т.д
               saveAlarmSounds(useAlarmSound, maxAlarmVolume, alarmSound, dawnSound);
             }
+            #endif
             break;
           case 3:
+            #if (USE_MP3 == 1)
             if (isDfPlayerOk) {
               // $20 3 X NN VV; - пример звука будильника
               //  X  - 1 играть 0 - остановить
@@ -728,8 +739,10 @@ void parsing() {
                 }
               }
             }  
+            #endif
             break;
           case 4:
+            #if (USE_MP3 == 1)
             if (isDfPlayerOk) {
               // $20 4 X NN VV; - пример звука рассвета
               //    X  - 1 играть 0 - остановить
@@ -754,14 +767,17 @@ void parsing() {
                 }
               }
             }
+            #endif
             break;
           case 5:
+            #if (USE_MP3 == 1)
             if (isDfPlayerOk && soundFolder > 0) {
              // $20 5 VV; - установит уровень громкости проигрывания примеров (когда уже играет)
              //    VV - уровень громкости
              maxAlarmVolume = constrain(intData[2],0,30);
              dfPlayer.volume(maxAlarmVolume);
             }
+            #endif
             break;
         }
         if (intData[1] == 0) {
@@ -857,7 +873,6 @@ void parsing() {
         }
         break;
     }
-    lastMode = intData[0];  // запомнить предыдущий режим
   }
 
   // ****************** ПАРСИНГ *****************
@@ -1046,6 +1061,7 @@ void sendPageParams(int page) {
   boolean allowed;
   byte b_tmp;
   CRGB c1, c2;
+  
   switch (page) { 
     case 1:  // Настройки. Вернуть: Ширина/Высота матрицы; Яркость; Деморежм и Автосмена; Время смены режимо
       str="$18 W:"+String(WIDTH)+"|H:"+String(HEIGHT)+"|DM:";
@@ -1060,13 +1076,17 @@ void sendPageParams(int page) {
     case 2:  // Эффекты. Вернуть: Номер эффекта, Остановлен или играет; Яркость; Скорость эффекта; Использовать в демо 
       allowed = false;
       str="$18 EF:"+String(thisMode+1);
-      str+="|BR:"+String(globalBrightness) + "|SE:" + String(255 - constrain(map(effectSpeed, D_EFFECT_SPEED_MIN,D_EFFECT_SPEED_MAX, 0, 255), 0,255));
+      str+="|BR:"+String(globalBrightness);
       if (getEffectUsage(thisMode))
           str+="|UE:1";
       else    
           str+="|UE:0";
+      // Эффекты не имеющие настройки скорости отправляют значение "Х" - программа делает ползунок настройки недоступным
+      str+="|SE:"+(thisMode == MC_CLOCK /*|| thisMode == MC_PAINTBALL*/
+         ? "X" 
+         : String(255 - constrain(map(effectSpeed, D_EFFECT_SPEED_MIN,D_EFFECT_SPEED_MAX, 0, 255), 0,255)));
       // Эффекты не имеющие настройки вариации отправляют значение "Х" - программа делает ползунок настройки недоступным
-      str+="|SS:"+(thisMode == MC_DAWN_ALARM || thisMode == MC_RAINBOW_DIAG || thisMode == MC_BALLS || thisMode == MC_STARFALL || thisMode == MC_COLORS || thisMode == MC_PAINTBALL
+      str+="|SS:"+(thisMode == MC_DAWN_ALARM || thisMode == MC_RAINBOW_DIAG || thisMode == MC_BALLS || thisMode == MC_STARFALL || thisMode == MC_COLORS || thisMode == MC_SWIRL
          ? "X" 
          : String(effectScaleParam[thisMode]));
       str+=";";
@@ -1074,7 +1094,14 @@ void sendPageParams(int page) {
     case 3:  // Настройки часов.
       c1 = CRGB(globalClockColor);
       c2 = CRGB(globalTextColor);
-      str="$18 CE:"+String(getClockOverlayEnabled()) + "|CC:" + String(COLOR_MODE) + "|CO:" + String(CLOCK_ORIENT) + "|NC:" + String(nightClockColor) + "|CF:" + String(formatClock) + "|CT:" + String(COLOR_TEXT_MODE);
+      // Часы могут отображаться: 
+      // - вертикальные при высоте матрицы >= 11 и ширине >= 7; 
+      // - горизонтальные при ширене матрицы >= 15 и высоте >= 5
+      // Настройки часов можно отображать только если часы доступны по размерам: - или вертикальные или горизонтальные часы влазят на матрицу
+      // Настройки ориентации имеют смыcл только когда И горизонтальные И вертикальные часы могут быть отображены на матрице; В противном случае - смысла нет, так как выбор очевиден (только один вариант)
+      str="$18 CE:"+(allowVertical || allowHorizontal ? String(getClockOverlayEnabled()) : "X") + "|CC:" + String(COLOR_MODE) + 
+          "|CO:" + (allowVertical && allowHorizontal ? String(CLOCK_ORIENT) : "X") + 
+          "|NC:" + String(nightClockColor) + "|CF:" + String(formatClock) + "|CT:" + String(COLOR_TEXT_MODE);
       str += "|SC:" + String(255 - getEffectSpeed(MC_CLOCK)) + "|ST:" + String(255 - getEffectSpeed(MC_TEXT));
       str += "|C1:" + String(c1.r) + "," + String(c1.g) + "," + String(c1.b);
       str += "|C2:" + String(c2.r) + "," + String(c2.g) + "," + String(c2.b);      
@@ -1101,6 +1128,7 @@ void sendPageParams(int page) {
       }
       str+="|AE:" + String(alarmEffect + 1);                   // Индекс в списке в приложении смартфона начинается с 1
       str+="|MX:" + String(isDfPlayerOk ? "1" : "0");          // 1 - MP3 доступен; 0 - MP3 не доступен
+      #if (USE_MP3 == 1)
       str+="|MU:" + String(useAlarmSound ? "1" : "0");         // 1 - использовать звук; 0 - MP3 не использовать звук
       str+="|MD:" + String(alarmDuration); 
       str+="|MV:" + String(maxAlarmVolume); 
@@ -1113,6 +1141,7 @@ void sendPageParams(int page) {
         str+="|MA:" + String(alarmSound+2);                      // Знач: -1 - нет; 0 - случайно; 1 и далее - файлы; -> В списке индексы: 1 - нет; 2 - случайно; 3 и далее - файлы
       }
       str+="|MP:" + String(soundFolder) + '~' + String(soundFile+2); 
+      #endif
       str+=";";
       break;
     case 5:  // Настройки подключения
@@ -1137,8 +1166,10 @@ void sendPageParams(int page) {
       cmd95 = str;
       break;
     case 96:  // Ответ демо-режима звука - сообщение по инициативе сервера
+      #if (USE_MP3 == 1)
       str ="$18 MP:" + String(soundFolder) + '~' + String(soundFile+2) + ";"; 
       cmd96 = str;
+      #endif
       break;
     case 99:  // Запрос списка эффектов
       str="$18 LE:[" + String(EFFECT_LIST) + "];"; 
@@ -1149,13 +1180,7 @@ void sendPageParams(int page) {
     // Отправить клиенту запрошенные параметры страницы / режимов
     str.toCharArray(incomeBuffer, str.length()+1);    
     udp.beginPacket(udp.remoteIP(), udp.remotePort());
-#if defined(ESP8266)
-    udp.write(incomeBuffer, str.length()+1);
-#endif
-
-#if defined(ESP32)
     udp.write((const uint8_t*) incomeBuffer, str.length()+1);
-#endif
     udp.endPacket();
     delay(0);
     Serial.println(String(F("Ответ на ")) + udp.remoteIP().toString() + ":" + String(udp.remotePort()) + " >> " + String(incomeBuffer));
@@ -1173,13 +1198,7 @@ void sendAcknowledge() {
   reply += "ack" + String(ackCounter++) + ";";  
   reply.toCharArray(replyBuffer, reply.length()+1);
   udp.beginPacket(udp.remoteIP(), udp.remotePort());
-#if defined(ESP8266)
-  udp.write(replyBuffer, reply.length()+1);
-#endif
-
-#if defined(ESP32)
   udp.write((const uint8_t*) replyBuffer, reply.length()+1);
-#endif
   udp.endPacket();
   delay(0);
   if (isCmd) {
@@ -1274,6 +1293,8 @@ void resetModes() {
   isNightClock = false;
   specialModeId = -1;
   loadingFlag = false;
+  wifi_print_ip = false;
+  wifi_print_ip_text = false;
 }
 
 void setEffect(byte eff) {
@@ -1293,10 +1314,11 @@ void setEffect(byte eff) {
 }
 
 void showCurrentIP() {
-  resetModes();          
+  setEffect(MC_TEXT);
   BTcontrol = false;
   AUTOPLAY = true;
   wifi_print_ip = true;
+  wifi_print_ip_text = true;
   wifi_print_idx = 0; 
   wifi_current_ip = wifi_connected ? WiFi.localIP().toString() : String(F("Нет подключения к сети WiFi"));
 }

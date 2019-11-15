@@ -11,7 +11,7 @@
 
 // ************************ WIFI ЛАМПА *************************
 
-#define FIRMWARE_VER F("\n\nGyverLamp-WiFi v.1.01.2019.1112")
+#define FIRMWARE_VER F("\n\nGyverLamp-WiFi v.1.01.2019.1115")
 #define FASTLED_INTERRUPT_RETRY_COUNT 0
 #define FASTLED_ALLOW_INTERRUPTS 0
 
@@ -134,7 +134,7 @@ uint16_t CURRENT_LIMIT=5000;  // лимит по току в миллиампе�
 #include <TimeLib.h>
 #include <EEPROM.h>
 #include "FastLED.h"                 // Установите в менеджере библиотек стандартную библиотеку FastLED
-#include "GyverTM1637.h"             // Внимание!!! Библиотека в папке проекта libraries изменена - константы букв и цифр переименованы с вида _1, _A на _1_, _A_ из за ошибок компиляции для ESP32
+#include "TM1637Display.h"          // Внимание!!! Библиотека в папке проекта libraries изменена - константы букв и цифр переименованы с вида _1, _A на _1_, _A_ из за ошибок компиляции для ESP32
 #include "timerMinim.h"
 #include "GyverButton.h"
 #include "fonts.h"
@@ -419,7 +419,7 @@ byte AM2_hour = 0;                   // Режим 2 по времени - ча�
 byte AM2_minute = 0;                 // Режим 2 по времени - минуты
 int8_t AM2_effect_id = -3;           // Режим 2 по времени - ID эффекта или -3 - выключено (не используется); -2 - выключить матрицу (черный экран); -1 - огонь, 0 - случайный, 1 и далее - эффект EFFECT_LIST
 
-GyverTM1637 display(CLK, DIO);
+TM1637Display display(CLK, DIO);
 
 void setup() {
 #if defined(ESP8266)
@@ -452,7 +452,7 @@ void setup() {
   butt.setStepTimeout(100);
   butt.setClickTimeout(500);
 
-  display.brightness(7);
+  display.setBrightness(7);
   display.displayByte(_empty, _empty, _empty, _empty);
   
   // Таймер бездействия

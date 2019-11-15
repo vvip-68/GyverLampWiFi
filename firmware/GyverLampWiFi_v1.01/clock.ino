@@ -293,18 +293,16 @@ void clockTicker() {
     }
   } else {
     // Отображение часов - разделительное двоеточие...
-    if (halfSec) {
-      display.point(dotFlag);
-    }
+    if (halfSec) display.point(dotFlag);
     // Если время еще не получено - отображать прочерки
     if (!init_time) {
       if (halfSec) display.displayByte(_dash, _dash, _dash, _dash);
     } else if (!isAlarmStopped && (isPlayAlarmSound || isAlarming)) {
       // Сработал будильник (звук) - плавное мерцание текущего времени      
       if (halfSec) display.displayClock(hour(),minute());
-      if (millis() - fade_time > 50) {
+      if (millis() - fade_time > 65) {
         fade_time = millis();
-        display.brightness(aCounter);        
+        display.setBrightness(aCounter);        
         if (aDirection) aCounter++; else aCounter--;
         if (aCounter > 7) {
           aDirection = false;
@@ -318,7 +316,7 @@ void clockTicker() {
       // Время получено - отображать часы:минуты
       if (halfSec) {
         display.displayClock(hour(),minute());
-        display.brightness(isTurnedOff ? 1 : 7);
+        display.setBrightness(isTurnedOff ? 1 : 7);
       }
     }
   }
@@ -610,7 +608,7 @@ void checkAlarmTime() {
 
     // Во время работы будильника индикатор плавно мерцает.
     // После завершения работы - восстановить яркость индикатора
-    display.brightness(7);
+    display.setBrightness(7);
     Serial.println(String(F("Будильник Авто-ВЫКЛ в "))+String(h)+ ":" + String(m));
     
     alarmSoundTimer.setInterval(4294967295);
@@ -675,7 +673,7 @@ void stopAlarm() {
     // Во время работы будильника индикатор плавно мерцает.
     // После завершения работы - восстановить яркость индикатора
     
-    display.brightness(7);
+    display.setBrightness(7);
     StopSound(1000);
 
     resetModes();  

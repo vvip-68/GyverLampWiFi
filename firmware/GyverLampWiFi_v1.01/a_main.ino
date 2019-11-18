@@ -523,6 +523,7 @@ void parsing() {
            // Если в строке цвет - "$14 2 00FFAA;" - цвет лампы, сохраняемый в globalColor
            str = String(incomeBuffer).substring(6,12); // $14 2 00FFAA;
            globalColor = (uint32_t)HEXtoInt(str);
+           setGlobalColor(globalColor);
         }
         setSpecialMode(intData[1]);
         sendPageParams(1);

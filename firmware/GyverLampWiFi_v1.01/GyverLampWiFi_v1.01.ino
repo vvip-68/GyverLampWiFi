@@ -55,7 +55,7 @@ uint16_t CURRENT_LIMIT=5000;  // лимит по току в миллиампе�
  * TM1637       - D5 к DIO, D7 к CLK
  * В менеджере плат выбрано NodeMCU v1.0 (ESP-12E)
  */
-/*
+
 #if defined(ESP8266)
 #define WIDTH 19              // ширина матрицы
 #define HEIGHT 9              // высота матрицы
@@ -73,7 +73,7 @@ uint16_t CURRENT_LIMIT=5000;  // лимит по току в миллиампе�
 #define DIO D5                // TM1637 display DIO pin
 #define CLK D7                // TM1637 display CLK pin
 #endif
-*/
+
 /*
  * NodeMCU v1.0 (ESP-12E)
  * Физическое подключение:
@@ -84,6 +84,7 @@ uint16_t CURRENT_LIMIT=5000;  // лимит по току в миллиампе�
  * TM1637       - D5 к DIO, D7 к CLK
  * В менеджере плат выбрано NodeMCU v1.0 (ESP-12E)
  */
+/*
 #if defined(ESP8266)
 #define WIDTH 13              // ширина матрицы
 #define HEIGHT 25             // высота матрицы
@@ -101,7 +102,7 @@ uint16_t CURRENT_LIMIT=5000;  // лимит по току в миллиампе�
 #define DIO D5                // TM1637 display DIO pin
 #define CLK D7                // TM1637 display CLK pin
 #endif
-
+*/
 /*
  * NodeMCU ESP32
  * Физическое подключение:

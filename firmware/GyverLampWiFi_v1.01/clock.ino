@@ -694,9 +694,9 @@ void stopAlarm() {
 }
 
 // Проверка необходимости включения режима 1 по установленному времени
-// -2 - не используется; -1 - выключить матрицу; 0 - включить случайный с автосменой; 1 - номер режима из спписка EFFECT_LIST
+// -3 - не используется; -2 - выключить матрицу; -1 - ночные часы; 0 - включить случайный с автосменой; 1 - номер режима из спписка EFFECT_LIST
 void checkAutoMode1Time() {
-  if (AM1_effect_id <= -2 || AM1_effect_id >= MAX_EFFECT || !init_time) return;
+  if (AM1_effect_id <= -3 || AM1_effect_id >= MAX_EFFECT || !init_time) return;
   
   hrs = hour();
   mins = minute();
@@ -714,11 +714,11 @@ void checkAutoMode1Time() {
 }
 
 // Проверка необходимости включения режима 2 по установленному времени
-// -2 - не используется; -1 - выключить матрицу; 0 - включить случайный с автосменой; 1 - номер режима из спписка EFFECT_LIST
+// -3 - не используется; -2 - выключить матрицу; -1 - ночные часы; 0 - включить случайный с автосменой; 1 - номер режима из спписка EFFECT_LIST
 void checkAutoMode2Time() {
 
   // Действие отличается от "Нет действия" и время установлено?
-  if (AM2_effect_id <= -2 || AM2_effect_id >= MAX_EFFECT || !init_time) return;
+  if (AM2_effect_id <= -3 || AM2_effect_id >= MAX_EFFECT || !init_time) return;
 
   // Если сработал будильник - рассвет - режим не переключать - остаемся в режими обработки будильника
   if ((isAlarming || isPlayAlarmSound) && !isAlarmStopped) return;
@@ -752,19 +752,26 @@ void SetAutoMode(byte amode) {
 
   int8_t ef = (amode == 1 ? AM1_effect_id : AM2_effect_id);
 
-  //ef: -2 - нет действия; 
-  //    -1 - выключить лампу (черный экран); 
+  //ef: -3 - нет действия; 
+  //    -2 - выключить лампу (черный экран); 
+  //    -1 - ночные часы; 
   //     0 - случайный,
   //     1 и далее - эффект из EFFECT_LIST по списку
 
   // включить указанный режим
-  if (ef <= -2 || ef >= MAX_EFFECT) {
+  if (ef <= -3 || ef >= MAX_EFFECT) {
     Serial.print(F("нет действия"));
-  } else if (ef == -1) {
+  } else if (ef == -2) {
 
     // Выключить матрицу (черный экран)
     Serial.print(F("выключение лампы"));
     setSpecialMode(0);
+    
+  } else if (ef == -1) {
+
+    // Ночные часы
+    Serial.print(F("ночные часы"));
+    setSpecialMode(8);
     
   } else {
     Serial.print(F("включение режима "));    

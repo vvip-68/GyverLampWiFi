@@ -868,8 +868,8 @@ void checkClockOrigin() {
 uint32_t getNightClockColorByIndex(byte idx) {
   uint32_t color = 0x010000;  // Red
   switch (idx) {
-    case 0: color = 0x010000; break;  // Red
-    case 1: color = 0x000200; break;  // Green
+    case 0: color = 0xFF0000; break;  // Red     для красных часов яркость равна 1, цвет - максимально красный. Это дает более тусклые часы
+    case 1: color = 0x000200; break;  // Green   для остальных цветов - яркость 255, цвет - минимальный для данного цвета
     case 2: color = 0x000002; break;  // Blue
     case 3: color = 0x000202; break;  // Cyan
     case 4: color = 0x020002; break;  // Magenta

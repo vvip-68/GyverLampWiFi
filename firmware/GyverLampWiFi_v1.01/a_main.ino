@@ -387,10 +387,12 @@ void parsing() {
       case 4:
         if (intData[1] == 0) {
           globalBrightness = intData[2];
-          if (specialMode) specialBrightness = globalBrightness;
           saveMaxBrightness(globalBrightness);
-          FastLED.setBrightness(globalBrightness);
-          FastLED.show();
+          if (!isNightClock) {
+            if (specialMode) specialBrightness = globalBrightness;
+            FastLED.setBrightness(globalBrightness);
+            FastLED.show();
+          }
         }
         sendAcknowledge();
         break;
@@ -653,6 +655,10 @@ void parsing() {
            case 10:               // $19 10 X; - Цвет ночных часов:  0 - R; 1 - G; 2 - B; 3 - C; 3 - M; 5 - Y; 6 - W;
              setNightClockColor(intData[2]);
              nightClockColor = getNightClockColor();
+             if (isNightClock) {
+                specialBrightness = nightClockColor == 0 ? 1 : 255; // красные часы?
+                FastLED.setBrightness(specialBrightness);
+             }             
              break;
            case 11:               // $19 11 X; - Режим цвета часов бегущей строкой X: 0,1,2,           
              COLOR_TEXT_MODE = intData[2];
@@ -1257,7 +1263,7 @@ void setSpecialMode(int spc_mode) {
       tmp_eff = MC_CLOCK;
       specialClock = false;
       isNightClock = true;
-      specialBrightness = 255;
+      specialBrightness = nightClockColor == 0 ? 1 :255;   // красные часы?
       break;
     case 9:  // Часы бегущей строкой;
       tmp_eff = MC_TEXT;

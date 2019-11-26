@@ -786,13 +786,13 @@ byte getFormatClock() {
 
 void setPowerLimit(uint16_t limit) {
   if (limit != getPowerLimit()) {
-    EEPROM_int_write(156, limit);
+    EEPROM_int_write(150, limit);
     eepromModified = true;
   }
 }
 
 uint16_t getPowerLimit() {
-  uint16_t val = (uint16_t)EEPROM_int_read(156);
+  uint16_t val = (uint16_t)EEPROM_int_read(150);
   if (val !=0 && val < 1000) val = 1000;
   return val;
 }

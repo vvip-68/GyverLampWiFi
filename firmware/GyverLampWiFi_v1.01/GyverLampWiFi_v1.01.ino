@@ -12,8 +12,6 @@
 // ************************ WIFI ЛАМПА *************************
 
 #define FIRMWARE_VER F("\n\nGyverLamp-WiFi v.1.01.2019.1125")
-#define FASTLED_INTERRUPT_RETRY_COUNT 0
-#define FASTLED_ALLOW_INTERRUPTS 0
 
 // Подключение используемых библиотек
 #if defined(ESP8266)
@@ -520,6 +518,7 @@ void startWiFi() {
   
   WiFi.disconnect(true);
   wifi_connected = false;
+  
   delay(10);               //Иначе получаем Core 1 panic'ed (Cache disabled but cached memory region accessed)
   WiFi.mode(WIFI_STA);
  
@@ -549,7 +548,7 @@ void startWiFi() {
       Serial.print(".");
     }
     Serial.println();
-    
+
     if (!wifi_connected)
       Serial.println(F("Не удалось подключиться к сети WiFi."));
   }  
@@ -589,7 +588,7 @@ void startSoftAP() {
     ap_connected = WiFi.softAP(apName, apPass);
   }  
   Serial.println();  
-  
+
   if (!ap_connected) 
     Serial.println(F("Не удалось создать WiFi точку доступа."));
 }

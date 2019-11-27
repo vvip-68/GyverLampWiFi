@@ -11,7 +11,7 @@
 
 // ************************ WIFI ЛАМПА *************************
 
-#define FIRMWARE_VER F("\n\nGyverLamp-WiFi v.1.01.2019.1125")
+#define FIRMWARE_VER F("\n\nGyverLamp-WiFi v.1.02.2019.1127")
 
 // Подключение используемых библиотек
 #if defined(ESP8266)

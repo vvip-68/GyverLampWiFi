@@ -125,7 +125,8 @@ void swirlRoutine() {
     FastLED.clear();  // очистить
   }
 
-  byte variation = map(255-effectScaleParam[MC_SWIRL],0,255,1, 5);
+  // Как применить variation для этого эффекта?
+  // byte variation = map(255-effectScaleParam[MC_SWIRL],0,255,1, 5);
 
   // Apply some blurring to whatever's already on the matrix
   // Note that we never actually clear the matrix, we just constantly

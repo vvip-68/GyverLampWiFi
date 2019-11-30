@@ -108,10 +108,12 @@ void drawLetter(uint8_t index, uint8_t letter, int16_t offset, uint32_t color) {
 // интерпретатор кода символа в массиве fontHEX (для Arduino IDE 1.8.* и выше)
 uint8_t getFont(uint8_t font, uint8_t row) {
   font = font - '0' + 16;   // перевод код символа из таблицы ASCII в номер согласно нумерации массива
-  if (font <= 90) return pgm_read_byte(&(fontHEX[font][row]));     // для английских букв и символов
-  else if (font >= 112 && font <= 159) {    // и пизд*ц для русских
+  if (font <= 90) {
+    return pgm_read_byte(&(fontHEX[font][row]));     // для английских букв и символов
+  } else if (font >= 112 && font <= 159) {    // и пизд*ц для русских
     return pgm_read_byte(&(fontHEX[font - 17][row]));
   } else if (font >= 96 && font <= 111) {
     return pgm_read_byte(&(fontHEX[font + 47][row]));
   }
+  return 0;
 }

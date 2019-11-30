@@ -11,7 +11,7 @@
 
 // ************************ WIFI ЛАМПА *************************
 
-#define FIRMWARE_VER F("\n\nGyverLamp-WiFi v.1.02.2019.1127")
+#define FIRMWARE_VER F("\n\nGyverLamp-WiFi v.1.02.2019.1130")
 
 // Подключение используемых библиотек
 #if defined(ESP8266)
@@ -431,6 +431,13 @@ void setup() {
   EEPROM.begin(384);
   loadSettings();
 
+  // настройки ленты
+  FastLED.addLeds<WS2812, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
+  FastLED.setBrightness(globalBrightness);
+  if (CURRENT_LIMIT > 0) FastLED.setMaxPowerInVoltsAndMilliamps(5, CURRENT_LIMIT);
+  FastLED.clear();
+  FastLED.show();
+
   randomSeed(analogRead(0) ^ millis());    // пинаем генератор случайных чисел
 
   // Первый этап инициализации плеера - подключение и основные настройки
@@ -461,13 +468,6 @@ void setup() {
   
   dawnTimer.setInterval(4294967295);
   
-  // настройки ленты
-  FastLED.addLeds<WS2812, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
-  FastLED.setBrightness(globalBrightness);
-  if (CURRENT_LIMIT > 0) FastLED.setMaxPowerInVoltsAndMilliamps(5, CURRENT_LIMIT);
-  FastLED.clear();
-  FastLED.show();
-
   // Второй этап инициализации плеера - проверка наличия файлов звуков на SD карте
   #if (USE_MP3 == 1)
     InitializeDfPlayer2();

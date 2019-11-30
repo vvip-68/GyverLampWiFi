@@ -279,7 +279,6 @@ void parsing() {
   byte b_tmp;
   int8_t tmp_eff;
 
-  byte alarmDay;
   byte alarmHourVal;
   byte alarmMinuteVal;
   
@@ -398,6 +397,7 @@ void parsing() {
         break;
       case 6:
         loadingFlag = true;
+        b_tmp = 0;
         // строка принимается в формате N|text, где N:
         // 1 - имя сервера NTP
         // 2 - имя сети (SSID)
@@ -599,7 +599,7 @@ void parsing() {
       case 19: 
          switch (intData[1]) {
            case 1:               // $19 1 X; - сохранить настройку X "Часы в эффектах"
-             overlayEnabled = (CLOCK_ORIENT == 0 && allowHorizontal || CLOCK_ORIENT == 1 && allowVertical) ? intData[2] == 1 : false;
+             overlayEnabled = ((CLOCK_ORIENT == 0 && allowHorizontal) || (CLOCK_ORIENT == 1 && allowVertical)) ? intData[2] == 1 : false;
              saveClockOverlayEnabled(overlayEnabled);
              if (specialMode) specialClock = overlayEnabled;
              break;
@@ -817,7 +817,7 @@ void parsing() {
             // $21 1 IP1 IP2 IP3 IP4 - установить статический IP адрес подключения к локальной WiFi сети, пример: $21 1 192 168 0 106
             // Локальная сеть - 10.х.х.х или 172.16.х.х - 172.31.х.х или 192.168.х.х
             // Если задан адрес не локальной сети - сбросить его в 0.0.0.0, что означает получение динамического адреса 
-            if (!(intData[2] == 10 || intData[2] == 172 && intData[3] >= 16 && intData[3] <= 31 || intData[2] == 192 && intData[3] == 168)) {
+            if (!(intData[2] == 10 || (intData[2] == 172 && intData[3] >= 16 && intData[3] <= 31) || (intData[2] == 192 && intData[3] == 168))) {
               intData[2] = 0;
               intData[3] = 0;
               intData[4] = 0;
@@ -995,7 +995,7 @@ void parsing() {
     }
 
     if (incomingByte == ending) {                   // если таки приняли ; - конец парсинга
-      parseMode == NORMAL;
+      parseMode = NORMAL;
       parseStarted = false;                         // сброс
       recievedFlag = true;                          // флаг на принятие
       bufIdx = 0;
@@ -1065,8 +1065,6 @@ void sendPageParams(int page) {
   // C2:цвет     цвет режима "монохром" текстовых часов; цвет: 192,96,96 - R,G,B
 
   String str = "", color, text;
-  boolean allowed;
-  byte b_tmp;
   CRGB c1, c2;
   
   switch (page) { 
@@ -1081,7 +1079,6 @@ void sendPageParams(int page) {
       str+=";";
       break;
     case 2:  // Эффекты. Вернуть: Номер эффекта, Остановлен или играет; Яркость; Скорость эффекта; Использовать в демо 
-      allowed = false;
       str="$18 EF:"+String(thisMode+1);
       str+="|BR:"+String(globalBrightness);
       if (getEffectUsage(thisMode))
@@ -1223,7 +1220,7 @@ void setSpecialMode(int spc_mode) {
   specialModeId = -1;
 
   String str;
-  byte tmp_eff = -1;
+  int8_t tmp_eff = -1;
   specialBrightness = globalBrightness;
   specialClock = getClockOverlayEnabled();
 

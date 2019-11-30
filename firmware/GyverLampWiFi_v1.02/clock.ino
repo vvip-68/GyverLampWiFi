@@ -22,7 +22,7 @@ CRGB overlayLEDs[77];                 // По максимуму часы шри
 CRGB clockLED[5] = {HOUR_COLOR, HOUR_COLOR, DOT_COLOR, MIN_COLOR, MIN_COLOR};
 
 // send an NTP request to the time server at the given address
-unsigned long sendNTPpacket(IPAddress& address) {
+void sendNTPpacket(IPAddress& address) {
   Serial.print(F("Отправка NTP пакета на сервер "));
   Serial.println(ntpServerName);
   // set all bytes in the buffer to 0
@@ -324,7 +324,6 @@ void clockTicker() {
 
 void clockOverlayWrapH(int8_t posX, int8_t posY) {
   byte thisLED = 0;
-  int16_t nnn;
   for (int8_t i = posX; i < posX + 15; i++) {
     for (int8_t j = posY; j < posY + 5; j++) {
       overlayLEDs[thisLED] = leds[getPixelNumber(getClockX(i),j)];
@@ -851,9 +850,6 @@ void checkClockOrigin() {
     CLOCK_Y = CLOCK_Y_V;
   }
   
-  if (CLOCK_X < 0) CLOCK_X = 0;
-  if (CLOCK_Y < 0) CLOCK_Y = 0;
-
   // ширина и высота отображения часов  
   byte cw = CLOCK_ORIENT == 0 ? 4*3 + 3*1 : 2*3 + 1; // гориз: 4 цифры * (шрифт 3 пикс шириной) 3 + пробела между цифрами) // ширина горизонтальных часов
                                                      // верт:  2 цифры * (шрифт 3 пикс шириной) 1 + пробел между цифрами)  // ширина вертикальных часов

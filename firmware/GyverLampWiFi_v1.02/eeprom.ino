@@ -248,7 +248,6 @@ void saveDefaults() {
   EEPROMwrite(38, (byte)AM2_effect_id); // Режим 2 по времени - действие: -3 - выключено (не используется); -2 - выключить матрицу (черный экран); -1 - огонь, 0 - случайный, 1 и далее - эффект EFFECT_LIST
   
   // Настройки по умолчанию для эффектов
-  int addr = EFFECT_EEPROM;
   for (int i = 0; i < MAX_EFFECT; i++) {
     saveEffectParams(i, effectSpeed, 50, true);
   }
@@ -376,7 +375,7 @@ long getIdleTime() {
 }
 
 boolean getClockOverlayEnabled() {
-  return EEPROMread(30) == 1;
+  return (EEPROMread(30) == 1) && (allowVertical || allowHorizontal);
 }
 
 void saveClockOverlayEnabled(boolean enabled) {
@@ -420,8 +419,8 @@ byte getClockOrientation() {
   
   byte val = EEPROMread(15) == 1 ? 1 : 0;
   
-  if (val == 0 && !allowHorizontal) val == 1;
-  if (val == 1 && !allowVertical) val == 0;
+  if (val == 0 && !allowHorizontal) val = 1;
+  if (val == 1 && !allowVertical) val = 0;
 
   return val;
 }
@@ -460,7 +459,7 @@ void setAlarmTime(byte day, byte hour, byte minute) {
   if (hour != getAlarmHour(day)) {
     EEPROMwrite(40 + 2 * (day - 1), constrain(hour, 0, 23));
   }
-  if (hour != minute != getAlarmMinute(day)) {
+  if (minute != getAlarmMinute(day)) {
     EEPROMwrite(40 + 2 * (day - 1) + 1, constrain(minute, 0, 59));
   }
 }

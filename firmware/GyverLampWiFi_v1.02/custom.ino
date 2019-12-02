@@ -43,11 +43,12 @@ void doEffectWithOverlay(byte aMode) {
 
   if (!(effectReady || clockReady)) return;
 
-  // Просто часы режима MC_CLOCK рисуются как оверлей на черном фоне
-  bool needOverlay = aMode == MC_CLOCK || (overlayEnabled && overlayAllowed());
+  // Оверлей нужен для всех эффектов, иначе при малой скорости эффекта и большой скорости часов поверэ эффекта
+  // цифры "смазываются"
+  bool needOverlay = aMode == MC_CLOCK || (aMode != MC_TEXT && overlayEnabled);
 
   if (needOverlay && lastOverlayMode == thisMode) {
-    if (!loadingFlag && needUnwrap()) {
+    if (!loadingFlag) {
       if (CLOCK_ORIENT == 0)
         clockOverlayUnwrapH(CLOCK_XC, CLOCK_Y);
       else

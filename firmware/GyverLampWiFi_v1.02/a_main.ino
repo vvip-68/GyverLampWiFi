@@ -1063,6 +1063,8 @@ void sendPageParams(int page) {
   // ST:число    скорость смещения текстовых часов
   // C1:цвет     цвет режима "монохром" часов оверлея; цвет: 192,96,96 - R,G,B
   // C2:цвет     цвет режима "монохром" текстовых часов; цвет: 192,96,96 - R,G,B
+  // S1:[список] список звуков будильника, разделенный запятыми, ограничители [] обязательны        
+  // S2:[список] список звуков рассвета, разделенный запятыми, ограничители [] обязательны        
 
   String str = "", color, text;
   CRGB c1, c2;
@@ -1164,6 +1166,14 @@ void sendPageParams(int page) {
              "|AM2T:"+String(AM2_hour)+" "+String(AM2_minute)+"|AM2A:"+String(AM2_effect_id); 
       str+=";";
       break;
+#if (USE_MP3 == 1)
+    case 93:  // Запрос списка звуков будильника
+      str="$18 S1:[" + String(ALARM_SOUND_LIST).substring(0,UDP_PACKET_MAX_SIZE-12) + "];"; 
+      break;
+    case 94:  // Запрос списка звуков рассвета
+      str="$18 S2:[" + String(DAWN_SOUND_LIST).substring(0,UDP_PACKET_MAX_SIZE-12) + "];"; 
+      break;
+#endif      
     case 95:  // Ответ состояния будильника - сообщение по инициативе сервера
       str = "$18 AL:"; 
       if ((isAlarming || isPlayAlarmSound) && !isAlarmStopped) str+="1;"; else str+="0;";
@@ -1176,7 +1186,7 @@ void sendPageParams(int page) {
       #endif
       break;
     case 99:  // Запрос списка эффектов
-      str="$18 LE:[" + String(EFFECT_LIST) + "];"; 
+      str="$18 LE:[" + String(EFFECT_LIST).substring(0,UDP_PACKET_MAX_SIZE-12) + "];"; 
       break;
   }
   

@@ -163,7 +163,6 @@ void loadSettings() {
     overlayEnabled = true;
 
     useNtp = true;
-    timeZoneOffset = 7;
     CLOCK_ORIENT = 0;
     COLOR_MODE = 0;
 

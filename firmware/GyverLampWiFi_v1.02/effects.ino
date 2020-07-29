@@ -249,6 +249,7 @@ void ballRoutine() {
     modeCode = MC_BALL;
     loadingFlag = false;
   }
+
   ballSize = map(effectScaleParam[MC_BALL],0,255,2, max(min(WIDTH,HEIGHT) / 3, 2));
   for (byte i = 0; i < 2; i++) {
     coordB[i] += vectorB[i];
